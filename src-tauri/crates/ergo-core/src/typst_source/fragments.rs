@@ -429,15 +429,7 @@ fn generate_element_typst(
                 .asset_id
                 .as_ref()
                 .filter(|asset_id| !asset_id.trim().is_empty())
-                .and_then(|asset_id| {
-                    assets
-                        .iter()
-                        .find(|asset| asset.id == *asset_id)
-                        .map(|asset| asset.path.clone())
-                        .or_else(|| {
-                            Some(format!("assets/diagrams/{}.svg", path_id_for_id(asset_id)))
-                        })
-                })
+                .map(|asset_id| crate::generated_assets::diagram_svg_path(assets, asset_id))
                 .map(|p| {
                     if adjust_asset_paths {
                         asset_path_relative_to_element(&p)

@@ -9,6 +9,9 @@ use ergo_core::bundled_templates::{
     is_path_under_template_mount,
 };
 use ergo_core::core_errors::ErgoError;
+use ergo_core::generated_assets::{
+    is_generated_diagram_asset_path, referenced_generated_diagram_paths,
+};
 use ergo_core::path_utils::normalize_virtual_path;
 use ergo_core::template_spec::load_bundled_template;
 
@@ -34,11 +37,20 @@ pub fn save_project_to_path(state: &TauriAppState, path: impl AsRef<Path>) -> Re
         })?;
 
     let template_mounts = embedded_template_mounts_for_vfs(&state.vfs);
+    // Removed diagrams keep their SVG in the VFS for undo; only referenced ones are saved.
+    let diagram_svgs = state
+        .document_session
+        .ast()
+        .map(|ast| referenced_generated_diagram_paths(&ast));
     let mut files = state
         .vfs
         .get_all_files()
         .into_iter()
         .filter(|(name, _)| should_pack_file(name, &template_mounts))
+        .filter(|(name, _)| match &diagram_svgs {
+            Some(referenced) => !is_generated_diagram_asset_path(name) || referenced.contains(name),
+            None => true,
+        })
         .collect::<Vec<_>>();
     files.sort_by(|(left, _), (right, _)| left.cmp(right));
 
@@ -590,6 +602,35 @@ mod tests {
 
         assert!(!names.contains(".ergproj/resource-previews/svg/equation-1-deadbeef.svg"));
         assert!(names.contains("assets/image.png"));
+    }
+
+    #[test]
+    fn save_project_packs_only_referenced_diagram_svgs() {
+        let state = test_state();
+        let path = temp_project_path();
+        let mut ast = basic_document_ast("Title", "Abstract");
+        let crate::ast::DocumentSection::Content(content) = &mut ast.sections[0];
+        content.elements.push(crate::ast::DocumentElement::Diagram(crate::ast::Diagram {
+            id: "diagram-kept".to_string(),
+            mermaid_source: "flowchart TD\nA-->B".to_string(),
+            caption: String::new(),
+            placement: String::new(),
+            asset_id: Some("diagram-kept".to_string()),
+            extra_fields: Default::default(),
+        }));
+        state.document_session.sync_snapshot(ast).unwrap();
+        for name in ["diagram-kept", "diagram-removed"] {
+            state
+                .vfs
+                .write_file(&format!("assets/diagrams/{name}.svg"), b"<svg />".to_vec());
+        }
+
+        save_project_to_path(&state, &path).unwrap();
+
+        let names = zip_names(&path);
+        fs::remove_file(&path).ok();
+        assert!(names.contains("assets/diagrams/diagram-kept.svg"));
+        assert!(!names.contains("assets/diagrams/diagram-removed.svg"));
     }
 
     #[test]

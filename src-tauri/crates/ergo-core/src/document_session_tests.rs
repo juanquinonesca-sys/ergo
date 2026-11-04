@@ -885,41 +885,57 @@ fn applies_asset_events_to_document_state() {
 }
 
 #[test]
-fn remove_diagram_removes_generated_svg_from_vfs() {
+fn removed_diagram_keeps_its_svg_so_undo_compiles() {
     let vfs = Arc::new(VirtualFileSystem::new());
     let session = DocumentSession::new(Arc::clone(&vfs));
     let mut ast = basic_document_ast("Título con ñ", "");
     let content = match &mut ast.sections[0] {
         DocumentSection::Content(content) => content,
     };
-    content.elements.push(DocumentElement::Diagram(crate::ast::Diagram {
+    let diagram = DocumentElement::Diagram(crate::ast::Diagram {
         id: "diagram-1".to_string(),
         mermaid_source: "flowchart TD\nA-->B".to_string(),
         caption: String::new(),
         placement: String::new(),
         asset_id: Some("diagram-1".to_string()),
         extra_fields: Default::default(),
-    }));
-    ast.assets.push(crate::ast::AssetEntry {
+    });
+    content.elements.push(diagram.clone());
+    let section_id = content.id.clone();
+    let index = content.elements.len() - 1;
+    let svg_asset = crate::ast::AssetEntry {
         id: "diagram-1".to_string(),
         path: "assets/diagrams/diagram-1.svg".to_string(),
         kind: "image".to_string(),
         caption: None,
-    });
+    };
+    ast.assets.push(svg_asset.clone());
     session.sync_snapshot(ast).unwrap();
-    vfs.write_file(
-        "assets/diagrams/diagram-1.svg",
-        b"<svg></svg>".to_vec(),
-    );
+    vfs.write_file("assets/diagrams/diagram-1.svg", b"<svg></svg>".to_vec());
 
     session
         .apply_event(DocumentEvent::RemoveElement {
             element_id: "diagram-1".to_string(),
         })
         .unwrap();
-
     assert!(persisted_ast(&vfs).assets.is_empty());
-    assert!(vfs.read_file("assets/diagrams/diagram-1.svg").is_err());
+    assert!(crate::generated_assets::referenced_generated_diagram_paths(&persisted_ast(&vfs))
+        .is_empty());
+
+    // Undo restores the element and its asset entry, not the SVG bytes.
+    session
+        .apply_events(vec![
+            DocumentEvent::RestoreElement {
+                section_id,
+                index,
+                element: Box::new(diagram),
+            },
+            DocumentEvent::RestoreAsset { index: 0, asset: svg_asset },
+        ])
+        .unwrap();
+    assert!(vfs.read_file("assets/diagrams/diagram-1.svg").is_ok());
+    assert!(crate::generated_assets::referenced_generated_diagram_paths(&persisted_ast(&vfs))
+        .contains("assets/diagrams/diagram-1.svg"));
 }
 
 #[test]

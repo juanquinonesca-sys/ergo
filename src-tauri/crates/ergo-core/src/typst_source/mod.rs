@@ -10,7 +10,7 @@ mod figures;
 mod fragments;
 mod hashing;
 pub(crate) mod outline_titles;
-mod paths;
+pub(crate) mod paths;
 mod quote_attribution;
 mod references;
 mod outlines;

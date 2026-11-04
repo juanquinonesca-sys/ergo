@@ -7,9 +7,6 @@ use crate::core_errors::ErgoError;
 use crate::ast::{DocumentAST, DocumentElement, DocumentSection};
 use crate::document_session_events::apply_document_event;
 use crate::document_session_generation::{default_layout, generate_project_sources_incremental};
-use crate::generated_assets::{
-    generated_diagram_asset_path_for_asset_id, generated_diagram_asset_path_for_element,
-};
 pub use crate::document_session_types::{
     DocumentEvent, DocumentSessionStatus, FieldSourceMapEntry, FieldTextSegment, GeneratedFragment,
     ProjectSourceLayout, SourceMapEntry,
@@ -136,14 +133,10 @@ impl DocumentSession {
         let mut ast = inner.ast.take().ok_or_else(|| ErgoError::Operation {
             message: "Document session has not been initialized".to_string(),
         })?;
-        let vfs_removals = vfs_paths_for_generated_diagram_removal(&ast, &event);
         let dirty_resource_ids = dirty_resource_ids_for_event(&ast, &event);
         if let Err(e) = apply_document_event(&mut ast, event) {
             inner.ast = Some(ast);
             return Err(e);
-        }
-        for path in vfs_removals {
-            self.vfs.remove_path(&path);
         }
         self.sync_ast_locked(&mut inner, ast, dirty_resource_ids)
     }
@@ -167,22 +160,16 @@ impl DocumentSession {
             message: "Document session has not been initialized".to_string(),
         })?;
         // The batch is transactional: the frontend retries a failed batch as a
-        // whole, so applying it to a working copy (and deferring VFS removals
-        // until every event succeeded) keeps a mid-batch error from leaving an
-        // already-applied prefix that the retry would apply a second time.
+        // whole, so applying it to a working copy keeps a mid-batch error from
+        // leaving an already-applied prefix that the retry would apply a second time.
         let mut ast = original.clone();
         let mut dirty_resource_ids = HashSet::new();
-        let mut vfs_removals = Vec::new();
         for event in events {
-            vfs_removals.extend(vfs_paths_for_generated_diagram_removal(&ast, &event));
             dirty_resource_ids.extend(dirty_resource_ids_for_event(&ast, &event));
             if let Err(e) = apply_document_event(&mut ast, event) {
                 inner.ast = Some(original);
                 return Err(e);
             }
-        }
-        for path in vfs_removals {
-            self.vfs.remove_path(&path);
         }
         let status = self.sync_ast_locked(&mut inner, ast, dirty_resource_ids);
         if status.is_err() && inner.ast.is_none() {
@@ -339,27 +326,6 @@ impl DocumentSession {
 
     pub fn ast(&self) -> Option<DocumentAST> {
         self.inner.lock().ast.clone()
-    }
-}
-
-fn vfs_paths_for_generated_diagram_removal(
-    ast: &DocumentAST,
-    event: &DocumentEvent,
-) -> Vec<String> {
-    match event {
-        DocumentEvent::RemoveElement { element_id } => generated_diagram_asset_path_for_element(
-            ast,
-            element_id,
-        )
-        .into_iter()
-        .collect(),
-        DocumentEvent::RemoveAsset { asset_id } => generated_diagram_asset_path_for_asset_id(
-            ast,
-            asset_id,
-        )
-        .into_iter()
-        .collect(),
-        _ => Vec::new(),
     }
 }
 

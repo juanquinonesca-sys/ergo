@@ -59,7 +59,7 @@ versatile-apa/
 
 | Path | Role |
 |------|------|
-| `assets/` | Binary files referenced by `AssetEntry`, including durable generated diagram SVGs under `assets/diagrams/` |
+| `assets/` | Binary files referenced by `AssetEntry`, including durable generated diagram SVGs under `assets/diagrams/`. A removed diagram keeps its SVG in the VFS (undo, cut and paste, and moves restore the element); saving packs only the SVGs a diagram still references |
 | `packages/` | Mirrored registry Typst package files needed for offline WASM compilation |
 | `umb-apa/`, `versatile-apa/`, `vancouver-ergo/` | Embedded path-imported template Typst packages (frozen per project on save) |
 | `.ergproj/document_state.json` | Canonical structured AST (required on open) |
