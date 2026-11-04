@@ -288,6 +288,11 @@ fn load_bundled_template_from_resources(template_id: &str) -> Result<TemplateSpe
             let es = include_str!("../../../../resources/templates/umb-apa/locales/es.json");
             (t, Some(es))
         }
+        "vancouver" => {
+            let t = include_str!("../../../../resources/templates/vancouver/template.json");
+            let es = include_str!("../../../../resources/templates/vancouver/locales/es.json");
+            (t, Some(es))
+        }
         _ => {
             return Err(ErgoError::Operation {
                 message: format!("unknown bundled template: {template_id}"),
@@ -596,7 +601,7 @@ mod tests {
 
     #[test]
     fn bundled_templates_parse_and_import_lib_by_path() {
-        for template_id in ["apa7", "umb-apa"] {
+        for template_id in ["apa7", "umb-apa", "vancouver"] {
             let spec = load_bundled_template(template_id)
                 .unwrap_or_else(|error| panic!("{template_id} should parse: {error}"));
             assert!(

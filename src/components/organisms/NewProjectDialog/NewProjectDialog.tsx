@@ -13,16 +13,20 @@ import {
 import {
     DEFAULT_PROJECT_TEMPLATE_ID,
     UMB_APA_TEMPLATE_ID,
+    VANCOUVER_TEMPLATE_ID,
     NO_TEMPLATE_ID,
 } from "../../../state/ast/defaults";
 import { Dialog } from "../../molecules/Dialog/Dialog";
 import styles from "./NewProjectDialog.module.css";
+import { LAYOUT_FORMATS } from "../../../settings/project/layoutFormats";
 
 export interface NewProjectDialogValues {
     projectName: string;
     projectFileName: string;
     projectLocation: string;
     templateId: string;
+    /** `LAYOUT_FORMATS` id, or "" to keep the template's page layout. */
+    layoutFormatId: string;
 }
 
 export interface NewProjectDialogProps {
@@ -47,6 +51,7 @@ export const NewProjectDialog = ({
     );
     const [usesDefaultFileName, setUsesDefaultFileName] = useState(true);
     const [templateId, setTemplateId] = useState(DEFAULT_PROJECT_TEMPLATE_ID);
+    const [layoutFormatId, setLayoutFormatId] = useState("");
 
     const trimmedProjectName = projectName.trim();
     const trimmedProjectLocation = projectLocation.trim();
@@ -103,6 +108,7 @@ export const NewProjectDialog = ({
             projectFileName: sanitizeProjectFileName(trimmedProjectFileBasename),
             projectLocation: trimmedProjectLocation,
             templateId,
+            layoutFormatId,
         });
     };
 
@@ -164,12 +170,26 @@ export const NewProjectDialog = ({
                                 label: m.project_new_template_umb(),
                             },
                             {
+                                value: VANCOUVER_TEMPLATE_ID,
+                                label: m.project_new_template_vancouver(),
+                            },
+                            {
                                 value: NO_TEMPLATE_ID,
                                 label: m.project_new_template_none(),
                             },
                         ]}
                         value={templateId}
                         onChange={(event) => setTemplateId(event.target.value)}
+                    />
+                    <Select
+                        fullWidth
+                        label={m.project_new_layout_format_label()}
+                        options={[
+                            { value: "", label: m.settings_layout_template_default() },
+                            ...LAYOUT_FORMATS.map(({ id, label }) => ({ value: id, label })),
+                        ]}
+                        value={layoutFormatId}
+                        onChange={(event) => setLayoutFormatId(event.target.value)}
                     />
                     <div className={styles.fileNameGroup}>
                         <TextInput

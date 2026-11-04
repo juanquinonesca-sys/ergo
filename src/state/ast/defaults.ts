@@ -161,6 +161,7 @@ export const createContentSection = (id = createId()): ContentSection => ({
 
 export const DEFAULT_PROJECT_TEMPLATE_ID = "apa7";
 export const UMB_APA_TEMPLATE_ID = "umb-apa";
+export const VANCOUVER_TEMPLATE_ID = "vancouver";
 export const NO_TEMPLATE_ID = "none";
 
 export const createDocumentAST = (
@@ -199,6 +200,27 @@ export const createDocumentAST = (
                 },
             ],
         };
+    }
+
+    if (templateId === VANCOUVER_TEMPLATE_ID) {
+        const ast = createDefaultDocumentAST(templateSpec);
+        ast.metadata.template_id = VANCOUVER_TEMPLATE_ID;
+        ast.metadata.template_variant_id = templateVariantId;
+        ast.dependencies = { packages: [] };
+        ast.inputs = {
+            title: "Untitled Document",
+            running_title: "",
+            authors: [{ name: "", affiliations: [] }],
+            affiliations: [],
+            corresponding_author: "",
+            word_count: "",
+            abstract_objective: "",
+            abstract_methods: "",
+            abstract_results: "",
+            abstract_conclusions: "",
+            keywords: [],
+        };
+        return ast;
     }
 
     if (templateId === "umb-apa") {

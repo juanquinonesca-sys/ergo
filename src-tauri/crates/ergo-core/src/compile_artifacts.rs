@@ -415,6 +415,7 @@ mod tests {
 
         let mut ast = match template_id {
             "umb-apa" => crate::test_fixtures::default_umb_apa_project_ast(),
+            "vancouver" => crate::test_fixtures::default_vancouver_project_ast(),
             _ => crate::test_fixtures::default_apa7_project_ast(),
         };
         let marker = reference.citation_key.clone();
@@ -440,10 +441,7 @@ mod tests {
         }));
 
         let vfs = Arc::new(VirtualFileSystem::new());
-        match template_id {
-            "umb-apa" => crate::test_fixtures::populate_umb_apa(&vfs),
-            _ => crate::test_fixtures::populate_versatile_apa(&vfs),
-        }
+        crate::test_fixtures::populate_bundled_template(&vfs, template_id);
         let session = DocumentSession::new(Arc::clone(&vfs));
         session.sync_snapshot(ast).unwrap();
         vfs
@@ -466,7 +464,7 @@ mod tests {
             biblatex: "@article{smith2020, author = {Smith}, title = {Demo}, year = {2020}}"
                 .to_string(),
         };
-        for template_id in ["apa7", "umb-apa"] {
+        for template_id in ["apa7", "umb-apa", "vancouver"] {
             let vfs = cited_paragraph_project(template_id, full_entry.clone());
             let element_source = vfs.read_source("elements/p-1.typ").unwrap();
             // Citations use the BibLaTeX entry key, not the Érgo element id.
@@ -476,6 +474,73 @@ mod tests {
             );
             compile_project(vfs, template_id);
         }
+    }
+
+    /// Layout settings are emitted after each bundled template's show rule: the
+    /// generated Typst must compile there and actually change the rendered pages.
+    #[test]
+    fn layout_settings_compile_and_change_rendering_on_both_templates() {
+        use crate::settings::{LineSpacing, PageMargins, ParagraphSpacing};
+
+        let render = |template_id: &str, customize: bool| {
+            let mut ast = match template_id {
+                "umb-apa" => crate::test_fixtures::default_umb_apa_project_ast(),
+                "vancouver" => crate::test_fixtures::default_vancouver_project_ast(),
+                _ => crate::test_fixtures::default_apa7_project_ast(),
+            };
+            if customize {
+                let settings = &mut ast.metadata.project_settings;
+                settings.page_margins = Some(PageMargins {
+                    top_cm: 3.0,
+                    bottom_cm: 2.0,
+                    left_cm: 4.0,
+                    right_cm: 2.0,
+                });
+                settings.line_spacing = Some(LineSpacing::Single);
+                settings.paragraph_spacing = Some(ParagraphSpacing::Small);
+                settings.first_line_indent_cm = Some(0.0);
+            }
+            let vfs = Arc::new(VirtualFileSystem::new());
+            crate::test_fixtures::populate_bundled_template(&vfs, template_id);
+            DocumentSession::new(Arc::clone(&vfs)).sync_snapshot(ast).unwrap();
+            let world = ErgoWorld::new(vfs, file_id_for_virtual_path("main.typ"));
+            let document = compile_document(&world)
+                .unwrap_or_else(|error| panic!("{template_id} compile failed: {error}"));
+            render_svgs(&document)
+        };
+
+        for template_id in ["apa7", "umb-apa", "vancouver"] {
+            assert_ne!(
+                render(template_id, false),
+                render(template_id, true),
+                "{template_id}: layout settings should change the rendered pages"
+            );
+        }
+    }
+
+    /// A fresh Vancouver project with a cited reference compiles into title page,
+    /// structured abstract and body + references (the bracketed numbering itself
+    /// comes from Typst's built-in "vancouver" CSL set by the package).
+    #[test]
+    fn vancouver_project_with_citation_compiles_title_abstract_and_references() {
+        let entry = crate::ast::ReferenceEntry {
+            id: "ref-1".to_string(),
+            citation_key: "smith2020".to_string(),
+            biblatex: "@article{smith2020, author = {Smith, John}, title = {Demo}, journal = {J Test}, year = {2020}}"
+                .to_string(),
+        };
+        let vfs = cited_paragraph_project("vancouver", entry);
+        let main = vfs.read_source("main.typ").unwrap();
+        for call in ["#title-page(", "#abstract-page(", "#bibliography("] {
+            assert!(main.contains(call), "main.typ should call {call}; got:\n{main}");
+        }
+        assert!(main.contains("objective:"), "structured abstract params; got:\n{main}");
+        assert!(!main.contains("#outline("), "Vancouver disables outlines; got:\n{main}");
+
+        let world = ErgoWorld::new(vfs, file_id_for_virtual_path("main.typ"));
+        let document = compile_document(&world)
+            .unwrap_or_else(|error| panic!("vancouver compile failed: {error}"));
+        assert!(document.pages().len() >= 3, "title page, abstract, body");
     }
 
     #[test]

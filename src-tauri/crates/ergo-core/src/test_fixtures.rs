@@ -221,6 +221,34 @@ pub fn default_umb_apa_project_ast() -> DocumentAST {
     }
 }
 
+/// Fresh `vancouver` project: title page, structured abstract and one paragraph.
+pub fn default_vancouver_project_ast() -> DocumentAST {
+    let mut ast = default_umb_apa_project_ast();
+    ast.metadata.template_id = "vancouver".to_string();
+    ast.metadata.title = "Vancouver Title".to_string();
+    ast.inputs = serde_json::from_value(serde_json::json!({
+        "title": "Vancouver Title",
+        "running_title": "Short title",
+        "authors": [{ "name": "Author 1", "affiliations": ["1"] }],
+        "affiliations": ["Affiliation Name 1"],
+        "corresponding_author": "Author 1, author@example.org",
+        "word_count": "3000",
+        "abstract_objective": "Objective text.",
+        "abstract_methods": "Methods text.",
+        "abstract_results": "Results text.",
+        "abstract_conclusions": "Conclusions text.",
+        "keywords": ["key1", "key2"]
+    }))
+    .unwrap();
+    ast
+}
+
+/// Mount a bundled template's embedded Typst package, as the app does on sync.
+pub fn populate_bundled_template(vfs: &crate::vfs::VirtualFileSystem, template_id: &str) {
+    let spec = crate::template_spec::load_bundled_template(template_id).unwrap();
+    crate::bundled_templates::sync_bundled_template_package(vfs, template_id, &spec).unwrap();
+}
+
 pub fn preview_sync_document_ast() -> DocumentAST {
     let mut ast = basic_document_ast("Título con ñ", "");
     if let DocumentSection::Content(content) = &mut ast.sections[0] {

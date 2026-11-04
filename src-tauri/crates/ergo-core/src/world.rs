@@ -144,7 +144,7 @@ fn bundled_fonts() -> Arc<Vec<Font>> {
     FONTS
         .get_or_init(|| {
             Arc::new(
-                typst_assets::fonts()
+                crate::font_requirements::embedded_font_data()
                     .flat_map(|font| Font::iter(Bytes::new(font.to_vec())))
                     .collect(),
             )

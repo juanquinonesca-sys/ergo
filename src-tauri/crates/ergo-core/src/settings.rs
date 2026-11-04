@@ -202,6 +202,52 @@ pub struct ProjectSettings {
     pub table_stroke_width: Option<f32>,
     #[serde(default)]
     pub template_overrides: Vec<TemplateOverride>,
+    /// Page margins; `None` keeps the template's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub page_margins: Option<PageMargins>,
+    /// Line spacing; `None` keeps the template's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub line_spacing: Option<LineSpacing>,
+    /// Extra space between paragraphs; `None` keeps the template's.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub paragraph_spacing: Option<ParagraphSpacing>,
+    /// First-line paragraph indent in cm; `None` keeps the template's, `0` disables it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub first_line_indent_cm: Option<f32>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
+#[serde(deny_unknown_fields)]
+#[ts(export)]
+pub struct PageMargins {
+    pub top_cm: f32,
+    pub bottom_cm: f32,
+    pub left_cm: f32,
+    pub right_cm: f32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum LineSpacing {
+    Single,
+    OneAndHalf,
+    Double,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export)]
+pub enum ParagraphSpacing {
+    /// No gap beyond the line spacing (APA, MLA).
+    None,
+    Small,
+    /// One blank line between paragraphs.
+    BlankLine,
 }
 
 impl Default for ProjectSettings {
@@ -215,6 +261,10 @@ impl Default for ProjectSettings {
             font_size: Some(11.0),
             table_stroke_width: Some(0.5),
             template_overrides: Vec::new(),
+            page_margins: None,
+            line_spacing: None,
+            paragraph_spacing: None,
+            first_line_indent_cm: None,
         }
     }
 }

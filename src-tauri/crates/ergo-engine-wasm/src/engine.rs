@@ -69,7 +69,7 @@ static FONT_STAMP: AtomicU64 = AtomicU64::new(0);
 const COMEMO_MAX_AGE: usize = 10;
 
 pub fn bundled_fonts_vec() -> Vec<Font> {
-    typst_assets::fonts()
+    ergo_core::font_requirements::embedded_font_data()
         .flat_map(|font| Font::iter(Bytes::new(font.to_vec())))
         .collect()
 }

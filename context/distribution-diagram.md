@@ -61,7 +61,7 @@ versatile-apa/
 |------|------|
 | `assets/` | Binary files referenced by `AssetEntry`, including durable generated diagram SVGs under `assets/diagrams/` |
 | `packages/` | Mirrored registry Typst package files needed for offline WASM compilation |
-| `umb-apa/`, `versatile-apa/` | Embedded path-imported template Typst packages (frozen per project on save) |
+| `umb-apa/`, `versatile-apa/`, `vancouver-ergo/` | Embedded path-imported template Typst packages (frozen per project on save) |
 | `.ergproj/document_state.json` | Canonical structured AST (required on open) |
 | `.ergproj/source_map.json` | Element → Typst byte ranges |
 | `.ergproj/field_source_map.json` | Field → Typst byte ranges and UTF-16 segments |
@@ -90,6 +90,7 @@ Global settings outside project archives:
 Bundled install resources:
 
 - `defaults/default_settings.json` — single source of global-settings defaults, embedded into the binary at build time and mirrored by the frontend boot fallback (guarded by a test)
+- Fonts — Typst's embedded bundle (`typst-assets`) plus `crates/ergo-core/fonts/LibertinusMath-Regular.otf` (SIL OFL 1.1, licence alongside), compiled into the desktop binary and the WASM preview engine so the bundled templates' default text and math fonts render without system fonts
 - `defaults/default_keymap.json` — bundled keymap bindings, read at runtime and merged under the user's `keymap.json` profiles
 
 Per-project overrides: `.ergproj/project_settings.json`.

@@ -35,6 +35,7 @@ import { TextInput } from "../../atoms/TextInput/TextInput";
 import { FormField } from "../../molecules/FormField/FormField";
 import { TemplateOptionField } from "../../molecules/TemplateOptionField/TemplateOptionField";
 import styles from "./SettingsDialog.module.css";
+import { PageLayoutSettings } from "./PageLayoutSettings";
 import {
     checkProjectFontAvailability,
     fontUnavailableMessage,
@@ -292,6 +293,7 @@ export const ProjectSettingsPanel = ({
                 </FormField>
             </div>
         </section>
+        <PageLayoutSettings settings={settings} onChange={onChange} />
         <section className={styles.settingsGroup}>
             <h3>{m.settings_group_typography()}</h3>
             <div className={styles.fieldGrid}>

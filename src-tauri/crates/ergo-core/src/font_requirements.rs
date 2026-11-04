@@ -29,13 +29,24 @@ pub fn collect_font_families_from_settings(settings: &ProjectSettings) -> BTreeS
     families
 }
 
-/// Families available from Typst's embedded font bundle (Libertinus, New Computer Modern, DejaVu Mono, …).
+/// Libertinus Math (SIL OFL 1.1, Libertinus 7.051; licence in `fonts/OFL.txt`).
+/// Typst's bundle ships Libertinus Serif but not its math companion, which the
+/// bundled templates default to, so every machine without it installed fell
+/// back to New Computer Modern Math and warned.
+const LIBERTINUS_MATH: &[u8] = include_bytes!("../fonts/LibertinusMath-Regular.otf");
+
+/// Font files compiled into every build: Typst's bundle plus the fonts Érgo adds.
+pub fn embedded_font_data() -> impl Iterator<Item = &'static [u8]> {
+    typst_assets::fonts().chain(std::iter::once(LIBERTINUS_MATH))
+}
+
+/// Families available from the embedded font bundle (Libertinus, New Computer Modern, DejaVu Mono, …).
 pub fn bundled_font_families() -> BTreeSet<String> {
     static FAMILIES: OnceLock<BTreeSet<String>> = OnceLock::new();
     FAMILIES
         .get_or_init(|| {
             let mut families = BTreeSet::new();
-            for data in typst_assets::fonts() {
+            for data in embedded_font_data() {
                 for font in Font::iter(Bytes::new(data.to_vec())) {
                     families.insert(font.info().family.clone());
                 }
@@ -90,5 +101,12 @@ mod tests {
         required.insert("Arial".to_string());
         let missing = families_missing_from_bundled(&required);
         assert_eq!(missing, vec!["Arial".to_string()]);
+    }
+
+    /// Every math font a role can fall back to must render without system fonts;
+    /// otherwise the default project settings warn on machines that lack it.
+    #[test]
+    fn libertinus_math_is_embedded() {
+        assert!(bundled_font_families().contains("Libertinus Math"));
     }
 }

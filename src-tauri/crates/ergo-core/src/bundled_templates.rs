@@ -15,12 +15,18 @@ pub fn template_package_mount_prefix(spec: &TemplateSpec) -> Option<String> {
     None
 }
 
+/// App-shipped templates: (Érgo template id, embedded Typst package mount).
+pub const BUNDLED_TEMPLATE_MOUNTS: &[(&str, &str)] = &[
+    ("apa7", "versatile-apa"),
+    ("umb-apa", "umb-apa"),
+    ("vancouver", "vancouver-ergo"),
+];
+
 pub fn bundled_mount_for_template_id(template_id: &str) -> Option<&'static str> {
-    match template_id {
-        "umb-apa" => Some("umb-apa"),
-        "apa7" => Some("versatile-apa"),
-        _ => None,
-    }
+    BUNDLED_TEMPLATE_MOUNTS
+        .iter()
+        .find(|(id, _)| *id == template_id)
+        .map(|(_, mount)| *mount)
 }
 
 /// App-shipped templates whose editor spec and Typst package track the binary.
@@ -30,7 +36,9 @@ pub fn has_bundled_template_spec(template_id: &str) -> bool {
 
 /// Whether a VFS path belongs to an embedded path-imported template package tree.
 pub fn is_embedded_template_package_path(path: &str) -> bool {
-    path.starts_with("umb-apa/") || path.starts_with("versatile-apa/")
+    BUNDLED_TEMPLATE_MOUNTS
+        .iter()
+        .any(|(_, mount)| path.starts_with(&format!("{mount}/")))
 }
 
 /// Collect mount prefixes that should be packed into `.ergproj` archives.
@@ -43,7 +51,7 @@ pub fn embedded_template_mounts_for_vfs(vfs: &VirtualFileSystem) -> Vec<String> 
             }
         }
     }
-    for mount in ["umb-apa", "versatile-apa"] {
+    for (_, mount) in BUNDLED_TEMPLATE_MOUNTS {
         if mounts.iter().any(|existing| existing == mount) {
             continue;
         }
@@ -68,6 +76,8 @@ mod embed {
         include_dir!("$CARGO_MANIFEST_DIR/../../../typst_templates/umb-apa");
     static VERSATILE_APA_PACKAGE: Dir<'_> =
         include_dir!("$CARGO_MANIFEST_DIR/../../../typst_templates/versatile-apa");
+    static VANCOUVER_PACKAGE: Dir<'_> =
+        include_dir!("$CARGO_MANIFEST_DIR/../../../typst_templates/vancouver-ergo");
 
     fn walk(entry: &DirEntry<'_>, mount: &str, out: &mut Vec<(String, Vec<u8>)>) {
         match entry {
@@ -101,6 +111,7 @@ mod embed {
         match template_id {
             "umb-apa" => Some(bundled_files("umb-apa", &UMB_APA_PACKAGE)),
             "apa7" => Some(bundled_files("versatile-apa", &VERSATILE_APA_PACKAGE)),
+            "vancouver" => Some(bundled_files("vancouver-ergo", &VANCOUVER_PACKAGE)),
             _ => None,
         }
     }

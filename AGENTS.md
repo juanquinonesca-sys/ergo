@@ -69,8 +69,9 @@ The context files describe the intended current design. They are not a changelog
 
 Érgo **template ids** (bundled specs under `src-tauri/resources/templates/{id}/`, `DocumentAST.metadata.template_id`, `.ergproj/template.json`) name the product template. They are not Typst package names.
 
-- Bundled APA 7 template id: **`apa7`** (`resources/templates/apa7/template.json`).
-- Its Typst dependency is declared in the template spec as **`package.name`** (e.g. `@preview/versatile-apa`). Use that identifier only for imports, dependency manifests, and `collect_package_files` — not as an Érgo `template_id`.
+- Bundled template ids: **`apa7`**, **`umb-apa`**, **`vancouver`** (`resources/templates/{id}/template.json`).
+- Each declares its Typst package as **`package.name`**, a path import of the embedded package (`/versatile-apa/lib.typ`, `/umb-apa/lib.typ`, `/vancouver-ergo/lib.typ`; sources under `typst_templates/`). Use that identifier only for imports and package mounting — not as an Érgo `template_id`.
+- Template id → package mount lives in one table, `BUNDLED_TEMPLATE_MOUNTS` (`ergo-core/src/bundled_templates.rs`). A new bundled template also needs its `include_dir!` package embed there and its `include_str!` spec/locale entry in `template_spec/mod.rs` (the WASM preview has no resource directory).
 
 ## Stack
 
@@ -129,7 +130,7 @@ cargo run --release -p ergo-engine-wasm --bin wasm_preview_profile -- --scenario
 cargo run --release -p ergo-engine-wasm --bin wasm_preview_profile -- --scenario large-document --iterations 100 --json
 ```
 
-Available scenarios are `small-document`, `typing-title`, `large-document`, and `typing-body-large` (incremental per-keystroke body edit inside a multi-page document — the realistic large-project latency case). The profiler loads the bundled `versatile-apa`/`umb-apa` template packages from `typst_templates/` into its VFS so scenarios compile without a Typst package cache. Release builds are required for meaningful profiler captures. Integration test: `cargo nextest run -p ergo-engine-wasm wasm_preview_profile`.
+Available scenarios are `small-document`, `typing-title`, `large-document`, and `typing-body-large` (incremental per-keystroke body edit inside a multi-page document — the realistic large-project latency case). The profiler loads every bundled template package (`BUNDLED_TEMPLATE_MOUNTS`) from `typst_templates/` into its VFS so scenarios compile without a Typst package cache. Release builds are required for meaningful profiler captures. Integration test: `cargo nextest run -p ergo-engine-wasm wasm_preview_profile`.
 
 ## Critical: paraglide compile must run first
 

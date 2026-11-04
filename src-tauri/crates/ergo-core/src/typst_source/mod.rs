@@ -2,6 +2,7 @@ use crate::ast::{DocumentAST, RichText};
 use crate::document_source_builder::SourceBuilder;
 use crate::required_input_fallback::RequiredInputFallbacks;
 use crate::template_spec::{ParamSpec, ParamType, TemplateSpec};
+use crate::settings::{LineSpacing, ParagraphSpacing};
 
 mod complex_params;
 mod custom_fields;
@@ -90,6 +91,7 @@ fn generate_lib_typst_inner(
         push_project_page_settings(ast, &mut builder);
     }
     push_project_text_settings(ast, &mut builder);
+    push_project_paragraph_settings(ast, &mut builder);
     builder.push_literal("  #body\n");
     builder.push_literal("]\n");
     builder
@@ -188,21 +190,72 @@ fn push_document_show_rule(
 }
 
 fn push_project_page_settings(ast: &DocumentAST, builder: &mut SourceBuilder) {
-    let Some(paper_size) = ast
-        .metadata
-        .project_settings
+    let settings = &ast.metadata.project_settings;
+    if let Some(paper_size) = settings
         .paper_size
         .as_deref()
         .map(str::trim)
         .filter(|paper_size| !paper_size.is_empty())
-    else {
-        return;
-    };
+    {
+        builder.push_literal(&format!(
+            "  #set page(paper: \"{}\")\n",
+            escape_typst_string(paper_size)
+        ));
+    }
+    if let Some(margins) = settings.page_margins {
+        builder.push_literal(&format!(
+            "  #set page(margin: (top: {}cm, bottom: {}cm, left: {}cm, right: {}cm))\n",
+            typst_cm(margins.top_cm),
+            typst_cm(margins.bottom_cm),
+            typst_cm(margins.left_cm),
+            typst_cm(margins.right_cm),
+        ));
+    }
+}
 
-    builder.push_literal(&format!(
-        "  #set page(paper: \"{}\")\n",
-        escape_typst_string(paper_size)
-    ));
+/// A non-negative, finite cm amount as Typst source (`2.54`).
+fn typst_cm(value: f32) -> f32 {
+    if value.is_finite() { value.max(0.0) } else { 0.0 }
+}
+
+/// Typst `par.leading` for each line-spacing choice; `Double` matches APA's
+/// `double-spacing` (1.5em) so the presets line up with the bundled templates.
+fn line_spacing_leading(spacing: LineSpacing) -> &'static str {
+    match spacing {
+        LineSpacing::Single => "0.65em",
+        LineSpacing::OneAndHalf => "1.05em",
+        LineSpacing::Double => "1.5em",
+    }
+}
+
+/// Paragraph rules from project settings. They follow the template show rule, so
+/// a chosen value overrides the template while `None` leaves the template's.
+fn push_project_paragraph_settings(ast: &DocumentAST, builder: &mut SourceBuilder) {
+    let settings = &ast.metadata.project_settings;
+    if let Some(spacing) = settings.line_spacing {
+        builder.push_literal(&format!(
+            "  #set par(leading: {})\n",
+            line_spacing_leading(spacing)
+        ));
+    }
+    if let Some(indent) = settings.first_line_indent_cm {
+        builder.push_literal(&format!(
+            "  #set par(first-line-indent: {}cm)\n",
+            typst_cm(indent)
+        ));
+    }
+    if let Some(spacing) = settings.paragraph_spacing {
+        // Relative to the leading in force (the template's or the one set above),
+        // read in context so "no extra space" holds whatever the line spacing.
+        let gap = match spacing {
+            ParagraphSpacing::None => "par.leading",
+            ParagraphSpacing::Small => "par.leading + 0.5em",
+            ParagraphSpacing::BlankLine => "par.leading * 2 + 0.7em",
+        };
+        builder.push_literal(&format!(
+            "  #show: body => context {{ set par(spacing: {gap}); body }}\n"
+        ));
+    }
 }
 
 fn push_project_text_settings(ast: &DocumentAST, builder: &mut SourceBuilder) {
@@ -815,5 +868,65 @@ mod option_param_tests {
             &mut builder,
         ));
         assert_eq!(builder.source, "\"draft\"");
+    }
+}
+
+#[cfg(test)]
+mod layout_settings_tests {
+    use super::*;
+    use crate::settings::PageMargins;
+
+    fn lib_source(configure: impl FnOnce(&mut crate::settings::ProjectSettings)) -> String {
+        let template = crate::test_fixtures::basic_template_spec();
+        let mut ast = crate::test_fixtures::basic_document_ast("T", "");
+        configure(&mut ast.metadata.project_settings);
+        generate_lib_typst(&ast, &template).source
+    }
+
+    #[test]
+    fn unset_layout_settings_leave_the_template_in_charge() {
+        let source = lib_source(|_| {});
+        assert!(!source.contains("margin:"));
+        assert!(!source.contains("#set par("));
+        assert!(!source.contains("set par(spacing"));
+    }
+
+    #[test]
+    fn layout_settings_emit_rules_after_the_template_show_rule() {
+        let source = lib_source(|settings| {
+            settings.page_margins = Some(PageMargins {
+                top_cm: 3.0,
+                bottom_cm: 2.0,
+                left_cm: 4.0,
+                right_cm: 2.0,
+            });
+            settings.line_spacing = Some(LineSpacing::OneAndHalf);
+            settings.first_line_indent_cm = Some(1.27);
+            settings.paragraph_spacing = Some(ParagraphSpacing::None);
+        });
+
+        assert!(source.contains("#set page(margin: (top: 3cm, bottom: 2cm, left: 4cm, right: 2cm))"));
+        assert!(source.contains("#set par(leading: 1.05em)"));
+        assert!(source.contains("#set par(first-line-indent: 1.27cm)"));
+        assert!(source.contains("set par(spacing: par.leading)"));
+        let body = source.find("#body").expect("apply body");
+        for rule in ["margin:", "leading:", "first-line-indent:", "spacing:"] {
+            assert!(source.find(rule).expect(rule) < body, "{rule} must precede #body");
+        }
+    }
+
+    #[test]
+    fn negative_or_non_finite_lengths_clamp_to_zero() {
+        let source = lib_source(|settings| {
+            settings.first_line_indent_cm = Some(-1.0);
+            settings.page_margins = Some(PageMargins {
+                top_cm: f32::NAN,
+                bottom_cm: 1.0,
+                left_cm: 1.0,
+                right_cm: 1.0,
+            });
+        });
+        assert!(source.contains("first-line-indent: 0cm"));
+        assert!(source.contains("top: 0cm"));
     }
 }

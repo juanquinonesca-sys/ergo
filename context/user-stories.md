@@ -4,7 +4,7 @@
 
 ## Epic 1: Project and template management
 
-- **US1.1 — Create project:** Create a new project from the welcome screen or menubar: choose a display name, save location (defaulting to the system documents folder), optional custom `.ergproj` filename, and a template (`none`, bundled **APA 7** `apa7`, or **UMB APA 7** `umb-apa`). The app materializes a `.ergproj` archive with embedded template spec, Typst package tree, and generated section sources.
+- **US1.1 — Create project:** Create a new project from the welcome screen or menubar: choose a display name, save location (defaulting to the system documents folder), optional custom `.ergproj` filename, a template (`none`, bundled **APA 7** `apa7`, **UMB APA 7** `umb-apa`, or **Vancouver (ICMJE)** `vancouver`), and optionally a page format (APA 7, MLA 9, Vancouver) that presets margins, spacing, indent and font size. The app materializes a `.ergproj` archive with embedded template spec, Typst package tree, and generated section sources.
 - **US1.2 — Open project:** Open an existing `.ergproj` from the file picker or by path; the archive restores document AST, settings, bibliography, assets, and embedded template files into the backend session and WASM preview.
 - **US1.3 — Recent projects:** Open a recent project from the welcome list, the **Open Recent** dialog (keyboard-navigable), or the file menu; remove entries from the recent list without deleting files.
 - **US1.4 — Welcome entry point:** Start work from a welcome screen with new project, open project, open recent, command palette, and recent-project shortcuts before entering the workspace.
@@ -19,7 +19,7 @@
 ## Epic 2: Settings and configuration
 
 - **US2.1 — Global settings:** Configure application theme, UI locale (English / Spanish), default equation input syntax (Typst / LaTeX), default text and math fonts, autosave interval and triggers (focus loss, app close, project close), undo history limit, and optional Zotero translation-server integration for bibliography metadata lookup.
-- **US2.2 — Project settings:** Override per-project paper size, document language, fonts, font size, table stroke width, template variant, template-specific options, and outline inclusion/title overrides without changing global defaults.
+- **US2.2 — Project settings:** Override per-project paper size, document language, fonts, font size, page margins (per side), line spacing, paragraph spacing, first-line indent (each defaulting to the template and with APA 7 / MLA 9 / Vancouver quick formats), table stroke width, template variant, template-specific options, and outline inclusion/title overrides without changing global defaults.
 - **US2.3 — Keymap settings:** Choose a keymap profile, record and edit bindings (including multi-stroke sequences), view conflicts against the Rust action catalog, and persist overrides in user config.
 - **US2.4 — Configurable undo depth:** Cap in-memory undo/redo steps via global `history_limit` to bound RAM use on long sessions.
 

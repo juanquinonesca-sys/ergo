@@ -4,7 +4,7 @@
 
 ## Epic 1: Project and template management
 
-- **REQ1.1:** The application shall allow creating a new project from the welcome screen or menubar by collecting a display name, save location (defaulting to the system documents folder), an optional custom `.ergproj` filename, and a template (`none`, bundled APA 7 `apa7`, or UMB APA 7 `umb-apa`). Creation shall materialize a `.ergproj` archive with embedded template spec, Typst package tree, and generated section sources.
+- **REQ1.1:** The application shall allow creating a new project from the welcome screen or menubar by collecting a display name, save location (defaulting to the system documents folder), an optional custom `.ergproj` filename, a template (`none`, bundled APA 7 `apa7`, UMB APA 7 `umb-apa`, or Vancouver/ICMJE `vancouver` — title page with running title and corresponding author, structured abstract, IMRaD body, citation-sequence references in brackets), and an optional page format (APA 7, MLA 9, Vancouver) that presets the page-layout settings. Creation shall materialize a `.ergproj` archive with embedded template spec, Typst package tree, and generated section sources.
 - **REQ1.2:** The application shall open an existing `.ergproj` from the file picker or by path and restore document AST, settings, bibliography, assets, and embedded template files into the backend session and WASM preview.
 - **REQ1.3:** The application shall list recent projects on the welcome screen and in an **Open Recent** dialog (keyboard-navigable) and file menu; the user shall be able to open a recent project or remove an entry without deleting the file on disk.
 - **REQ1.4:** The application shall provide a welcome screen with new project, open project, open recent, command palette, and recent-project shortcuts before entering the workspace.
@@ -19,7 +19,7 @@
 ## Epic 2: Settings and configuration
 
 - **REQ2.1:** The application shall provide global settings for theme, UI locale (English / Spanish), default equation input syntax (Typst / LaTeX), default text and math fonts, autosave interval and triggers (focus loss, app close, project close), undo history limit, and optional Zotero translation-server integration for bibliography metadata lookup.
-- **REQ2.2:** The application shall provide per-project settings that override paper size, document language, fonts, font size, table stroke width, template variant, template-specific options, and outline inclusion/title overrides without changing global defaults.
+- **REQ2.2:** The application shall provide per-project settings that override paper size, document language, fonts, font size, page margins (per side), line spacing, paragraph spacing, first-line indent (each defaulting to the template and with APA 7 / MLA 9 / Vancouver quick formats), table stroke width, template variant, template-specific options, and outline inclusion/title overrides without changing global defaults.
 - **REQ2.3:** The application shall provide keymap settings to choose a profile, record and edit bindings (including multi-stroke sequences), view conflicts against the Rust action catalog, and persist overrides in user config.
 - **REQ2.4:** The application shall cap in-memory undo/redo steps via global `history_limit` to bound RAM use on long sessions.
 

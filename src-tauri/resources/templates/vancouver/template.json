@@ -1,0 +1,290 @@
+{
+  "$schema": "../../schemas/ergo-template.schema.json",
+  "metadata": {
+    "id": "vancouver",
+    "name": "Vancouver (ICMJE)",
+    "version": "1.0.0",
+    "description": "Vancouver / ICMJE manuscript: title page, structured abstract, IMRaD body and numbered references in order of citation."
+  },
+  "typst": {
+    "package": {
+      "name": "/vancouver-ergo/lib.typ",
+      "version": "",
+      "imports": [
+        "vancouver-style",
+        "title-page",
+        "abstract-page"
+      ]
+    },
+    "default_template_overrides": [
+      {
+        "key": "outline.include_contents",
+        "value": "false"
+      },
+      {
+        "key": "outline.include_tables",
+        "value": "false"
+      },
+      {
+        "key": "outline.include_figures",
+        "value": "false"
+      },
+      {
+        "key": "outline.include_equations",
+        "value": "false"
+      },
+      {
+        "key": "outline.include_listings",
+        "value": "false"
+      },
+      {
+        "key": "outline.include_appendices",
+        "value": "false"
+      }
+    ],
+    "show_rule": {
+      "function": "vancouver-style",
+      "params": [
+        {
+          "key": "font-size",
+          "type": "length",
+          "source": "settings.font_size",
+          "default": "12pt"
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "title-page",
+        "kind": "function_call",
+        "function": "title-page",
+        "label": "Title Page",
+        "params": [
+          {
+            "key": "authors",
+            "type": "author_list",
+            "source": "inputs.authors"
+          },
+          {
+            "key": "affiliations",
+            "type": "affiliation_map",
+            "source": "inputs.affiliations"
+          },
+          {
+            "key": "running-title",
+            "type": "content",
+            "source": "inputs.running_title"
+          },
+          {
+            "key": "corresponding-author",
+            "type": "content",
+            "source": "inputs.corresponding_author"
+          },
+          {
+            "key": "word-count",
+            "type": "content",
+            "source": "inputs.word_count"
+          }
+        ]
+      },
+      {
+        "id": "abstract-page",
+        "kind": "function_call",
+        "function": "abstract-page",
+        "label": "Abstract",
+        "pagebreak_before": true,
+        "params": [
+          {
+            "key": "objective",
+            "type": "content",
+            "source": "inputs.abstract_objective"
+          },
+          {
+            "key": "methods",
+            "type": "content",
+            "source": "inputs.abstract_methods"
+          },
+          {
+            "key": "results",
+            "type": "content",
+            "source": "inputs.abstract_results"
+          },
+          {
+            "key": "conclusions",
+            "type": "content",
+            "source": "inputs.abstract_conclusions"
+          },
+          {
+            "key": "keywords",
+            "type": "string_array",
+            "source": "inputs.keywords"
+          }
+        ]
+      },
+      {
+        "id": "body",
+        "kind": "content",
+        "label": "Body",
+        "pagebreak_before": true
+      },
+      {
+        "id": "references",
+        "kind": "bibliography",
+        "label": "References",
+        "file": "references.bib",
+        "title": "References",
+        "pagebreak_before": true
+      }
+    ],
+    "resource_policy": {
+      "preview": {
+        "margin_pt": 8
+      },
+      "pasted_image": {
+        "behavior": "figure"
+      }
+    }
+  },
+  "editor": {
+    "inputs": [
+      {
+        "id": "title",
+        "type": "string",
+        "label": "Document Title",
+        "importance": "optional",
+        "default": "Untitled Document"
+      },
+      {
+        "id": "running_title",
+        "type": "string",
+        "label": "Running Title",
+        "description": "At most 40 characters, including spaces",
+        "importance": "optional"
+      },
+      {
+        "id": "authors",
+        "type": "array",
+        "label": "Authors",
+        "importance": "required",
+        "items": {
+          "id": "author",
+          "type": "object",
+          "properties": [
+            {
+              "id": "name",
+              "type": "string",
+              "label": "Name",
+              "importance": "required"
+            },
+            {
+              "id": "affiliations",
+              "type": "array",
+              "label": "Author's affiliations",
+              "importance": "optional",
+              "items": {
+                "type": "reference",
+                "target": "affiliations",
+                "label": "Affiliation Reference"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "affiliations",
+        "type": "simple_list",
+        "label": "Affiliations",
+        "importance": "optional",
+        "items": {
+          "type": "content",
+          "label": "Affiliation"
+        }
+      },
+      {
+        "id": "corresponding_author",
+        "type": "string",
+        "label": "Corresponding Author",
+        "description": "Name, address and email",
+        "importance": "optional"
+      },
+      {
+        "id": "word_count",
+        "type": "string",
+        "label": "Word Count",
+        "importance": "optional"
+      },
+      {
+        "id": "abstract_objective",
+        "type": "content",
+        "label": "Objective",
+        "importance": "optional"
+      },
+      {
+        "id": "abstract_methods",
+        "type": "content",
+        "label": "Methods",
+        "importance": "optional"
+      },
+      {
+        "id": "abstract_results",
+        "type": "content",
+        "label": "Results",
+        "importance": "optional"
+      },
+      {
+        "id": "abstract_conclusions",
+        "type": "content",
+        "label": "Conclusions",
+        "importance": "optional"
+      },
+      {
+        "id": "keywords",
+        "type": "simple_list",
+        "label": "Keywords",
+        "importance": "optional",
+        "items": {
+          "type": "string",
+          "label": "Keyword"
+        }
+      }
+    ],
+    "groups": [
+      {
+        "id": "cover_page",
+        "label": "Title Page",
+        "inputs": [
+          "title",
+          "running_title",
+          "authors",
+          "affiliations",
+          "corresponding_author",
+          "word_count"
+        ]
+      },
+      {
+        "id": "abstract",
+        "label": "Structured Abstract",
+        "inputs": [
+          "abstract_objective",
+          "abstract_methods",
+          "abstract_results",
+          "abstract_conclusions",
+          "keywords"
+        ]
+      }
+    ],
+    "variants": [],
+    "custom_elements": [],
+    "defaults": {
+      "paper_size": "us-letter",
+      "language": "es",
+      "text_font": "Libertinus Serif",
+      "math_font": "Libertinus Math",
+      "raw_font": "DejaVu Sans Mono",
+      "font_size": 12.0,
+      "table_stroke_width": 0.5
+    },
+    "quote_policy": 40,
+    "options": []
+  }
+}

@@ -16,6 +16,7 @@ import {
     createDocumentAST,
 } from "../state/ast/defaults";
 import type { NewProjectDialogValues } from "../components/organisms/NewProjectDialog/NewProjectDialog";
+import { applyLayoutFormat } from "../settings/project/layoutFormats";
 
 interface UseProjectLifecycleOptions {
     dispatch: Dispatch<ASTAction>;
@@ -107,6 +108,7 @@ export const useProjectLifecycle = ({
             projectFileName,
             projectLocation,
             templateId,
+            layoutFormatId,
         }: NewProjectDialogValues) => {
             if (!(await saveBeforeProjectBoundary())) {
                 return;
@@ -121,6 +123,10 @@ export const useProjectLifecycle = ({
 
             const ast = createDocumentAST(templateId, templateSpec);
             ast.metadata.title = projectName;
+            ast.metadata.project_settings = applyLayoutFormat(
+                ast.metadata.project_settings,
+                layoutFormatId,
+            );
             const projectPath = projectPathInDirectory(
                 projectLocation,
                 projectFileName,

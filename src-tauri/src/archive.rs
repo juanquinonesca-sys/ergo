@@ -598,6 +598,7 @@ mod tests {
         for (template_id, package_dir, extra) in [
             ("umb-apa", "umb-apa", "umb-apa/assets/styles/apa.csl"),
             ("apa7", "versatile-apa", "versatile-apa/typst.toml"),
+            ("vancouver", "vancouver-ergo", "vancouver-ergo/lib.typ"),
         ] {
             let files =
                 bundled_package_files_for_template(template_id).expect("bundled package");
