@@ -3,6 +3,7 @@ import type { DocumentResources } from "../../../bindings/DocumentResources";
 import type { TargetedOutlineEntry } from "../../../editor/outlineMatching";
 import type { ResourcePreviewRevisions } from "../../../hooks/useCompiler";
 import {
+    AddSquareMultiple24Regular,
     Book24Regular,
     Shapes24Regular,
     TextBulletListTree24Regular,
@@ -11,6 +12,7 @@ import { useDocumentAstSelector } from "../../../state/DocumentContext";
 import { Tabs } from "../../molecules/Tabs/Tabs";
 import { m } from "../../../paraglide/messages.js";
 import { SidebarBibliographyPanel } from "./SidebarBibliography";
+import { SidebarElementsPanel } from "./SidebarElementsPanel";
 import { SidebarOutlinePanel } from "./SidebarOutline";
 import { SidebarResourcesPanel } from "./SidebarResources";
 import styles from "./Sidebar.module.css";
@@ -62,6 +64,16 @@ const SidebarComponent = ({
                                     previewRevision={previewRevision}
                                     previewScrollRef={previewScrollRef}
                                 />
+                            </div>
+                        ),
+                    },
+                    {
+                        id: "elements",
+                        label: m.sidebar_elements(),
+                        icon: <AddSquareMultiple24Regular />,
+                        panel: (
+                            <div className={styles.tabSection}>
+                                <SidebarElementsPanel />
                             </div>
                         ),
                     },

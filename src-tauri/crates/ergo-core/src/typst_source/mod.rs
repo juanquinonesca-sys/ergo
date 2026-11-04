@@ -8,7 +8,7 @@ mod custom_fields;
 mod figures;
 mod fragments;
 mod hashing;
-mod outline_titles;
+pub(crate) mod outline_titles;
 mod paths;
 mod quote_attribution;
 mod references;

@@ -1,0 +1,28 @@
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.hint {
+    margin: 0 0 var(--space-2);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.item.item {
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: var(--border-radius-sm);
+    cursor: grab;
+}
+
+.item.item:active {
+    cursor: grabbing;
+}
+
+.icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+}

@@ -105,4 +105,40 @@ describe("tryApplyHeadingLevelToCurrentBlock", () => {
             },
         ]);
     });
+
+    it("splits a partial paragraph selection out into its own heading", () => {
+        const paragraph = bodySchema.nodes.paragraph.create(
+            { elementId: "p1" },
+            richTextToInlineNodes(bodySchema, [createRichText("Intro method rest")]),
+        );
+        const doc = bodySchema.nodes.doc.create(null, [paragraph]);
+        // Select "method" (paragraph content starts at position 1).
+        const view = {
+            state: EditorState.create({
+                schema: bodySchema,
+                doc,
+                selection: TextSelection.create(doc, 7, 13),
+            }),
+            dispatch(tr: import("prosemirror-state").Transaction) {
+                view.state = view.state.apply(tr);
+            },
+        };
+        vi.spyOn(activeView, "getActiveBodyView").mockReturnValue(
+            view as never,
+        );
+
+        const actions: unknown[] = [];
+        expect(tryApplyHeadingLevelToCurrentBlock(1, (a) => actions.push(a))).toBe(
+            true,
+        );
+        const texts: string[] = [];
+        view.state.doc.forEach((block) => texts.push(block.textContent));
+        expect(texts).toEqual(["Intro ", "method", " rest"]);
+        expect(view.state.selection.$from.parent.textContent).toBe("method");
+        expect(actions).toHaveLength(1);
+        expect(actions[0]).toMatchObject({
+            type: "CONVERT_ELEMENT",
+            payload: { targetKind: "Heading", headingLevel: 1 },
+        });
+    });
 });

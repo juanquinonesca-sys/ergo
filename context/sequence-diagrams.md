@@ -59,6 +59,25 @@ sequenceDiagram
 - Asset paths use the same `assets/{name}` collision rules as `import_resource_file`.
 - Paste is handled in the body editor only; nested table-cell editors keep native text paste until a dedicated handler exists.
 
+### Element palette drop
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Palette as Sidebar Elements Panel
+    participant PM as Body Editor
+    participant Runtime as Action Runtime
+    participant State as Document State
+    User->>Palette: Drag element
+    Palette->>PM: drop (ActionInvocation in dataTransfer)
+    PM->>PM: posAtCoords → caret at drop point
+    PM->>Runtime: dispatchAction(invocation, fromContextId body)
+    Runtime->>State: ADD_* (anchored after the block at the caret)
+```
+
+- The dragged payload is the same `ActionInvocation` a toolbar click or shortcut dispatches; dropping only moves the caret first, so insertion rules (anchor, empty-block replacement, table-cell restrictions) stay in one place.
+- Clicking a palette item dispatches the invocation at the current caret.
+
 ## 2. Archive Save And Autosave
 
 New project:

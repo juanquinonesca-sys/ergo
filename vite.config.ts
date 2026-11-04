@@ -42,6 +42,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 1420,
     strictPort: true,
+    // WebKitGTK 2.52's network process crashes when revalidating cached dev
+    // modules, leaving the Linux window blank; dev responses are never worth caching.
+    headers: { "Cache-Control": "no-store" },
     host: host || false,
     hmr: host
       ? {

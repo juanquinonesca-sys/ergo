@@ -1,11 +1,14 @@
 use crate::ast::{DocumentAST, RichText};
 use crate::template_spec::{Importance, InputSchema, InputType, TemplateSpec};
+use crate::typst_source::outline_titles::normalize_document_language;
 
 /// Substitutes required template input labels when values are empty so Typst
 /// generation always has compile-safe content. The document AST is unchanged.
 pub(crate) struct RequiredInputFallbacks<'a> {
     template: &'a TemplateSpec,
     variant_id: Option<&'a str>,
+    /// `ProjectSettings.language`; picks the template locale for fallback labels.
+    language: Option<&'a str>,
 }
 
 impl<'a> RequiredInputFallbacks<'a> {
@@ -13,11 +16,18 @@ impl<'a> RequiredInputFallbacks<'a> {
         Self {
             template,
             variant_id,
+            language: None,
         }
+    }
+
+    pub(crate) fn with_language(mut self, language: Option<&'a str>) -> Self {
+        self.language = language;
+        self
     }
 
     pub(crate) fn from_ast(template: &'a TemplateSpec, ast: &'a DocumentAST) -> Self {
         Self::new(template, ast.metadata.template_variant_id.as_deref())
+            .with_language(ast.metadata.project_settings.language.as_deref())
     }
 
     pub(crate) fn effective_title<'s>(&self, raw: &'s str) -> String {
@@ -76,7 +86,7 @@ impl<'a> RequiredInputFallbacks<'a> {
                 return serde_json::Value::Array(items);
             }
 
-            return serde_json::json!([Self::rich_text_label_value(schema)]);
+            return serde_json::json!([self.rich_text_label_value(schema)]);
         }
 
         let items = value
@@ -98,7 +108,7 @@ impl<'a> RequiredInputFallbacks<'a> {
             );
         }
 
-        serde_json::json!([Self::field_label(schema)])
+        serde_json::json!([self.field_label(schema)])
     }
 
     fn prepare_simple_list_content_item(item: &serde_json::Value) -> Option<serde_json::Value> {
@@ -120,8 +130,8 @@ impl<'a> RequiredInputFallbacks<'a> {
         serde_json::to_value(content).ok()
     }
 
-    fn rich_text_label_value(schema: &InputSchema) -> serde_json::Value {
-        Self::rich_text_label_value_text(&Self::field_label(schema))
+    fn rich_text_label_value(&self, schema: &InputSchema) -> serde_json::Value {
+        Self::rich_text_label_value_text(&self.field_label(schema))
     }
 
     fn rich_text_label_value_text(text: &str) -> serde_json::Value {
@@ -142,7 +152,7 @@ impl<'a> RequiredInputFallbacks<'a> {
         value: &serde_json::Value,
         schema: &InputSchema,
     ) -> serde_json::Value {
-        let placeholder = Self::field_label(schema);
+        let placeholder = self.field_label(schema);
         let Some(items) = value.as_array() else {
             return serde_json::json!([{
                 "name": placeholder,
@@ -191,7 +201,7 @@ impl<'a> RequiredInputFallbacks<'a> {
         if schema.importance != Importance::Required || !self.applies(schema) {
             return None;
         }
-        Some(Self::field_label(schema))
+        Some(self.field_label(schema))
     }
 
     fn schema_by_id(&self, input_id: &str) -> Option<&InputSchema> {
@@ -213,7 +223,20 @@ impl<'a> RequiredInputFallbacks<'a> {
         }
     }
 
-    fn field_label(schema: &InputSchema) -> String {
+    /// The input's label in the document language (template locale), falling
+    /// back to the raw label, then the id. The preview shows it in place of an
+    /// empty required value, so it must not stay in English on a Spanish document.
+    fn field_label(&self, schema: &InputSchema) -> String {
+        let raw = Self::raw_field_label(schema);
+        self.template
+            .messages
+            .get(normalize_document_language(self.language))
+            .and_then(|messages| messages.get(&raw))
+            .cloned()
+            .unwrap_or(raw)
+    }
+
+    fn raw_field_label(schema: &InputSchema) -> String {
         schema
             .label
             .as_deref()
@@ -279,6 +302,25 @@ mod tests {
         assert_eq!(
             prepared,
             serde_json::json!([{ "name": "Fixture Authors", "affiliations": [] }])
+        );
+    }
+
+    #[test]
+    fn fallback_label_uses_the_document_language_locale() {
+        let mut template = fixture_template();
+        template.messages.insert(
+            "es".to_string(),
+            [("Fixture Authors".to_string(), "Autores de prueba".to_string())]
+                .into_iter()
+                .collect(),
+        );
+        let fallbacks =
+            RequiredInputFallbacks::new(&template, Some("student")).with_language(Some("es-CO"));
+        let prepared = fallbacks.prepare_input_value("authors", &serde_json::json!([]));
+
+        assert_eq!(
+            prepared,
+            serde_json::json!([{ "name": "Autores de prueba", "affiliations": [] }])
         );
     }
 

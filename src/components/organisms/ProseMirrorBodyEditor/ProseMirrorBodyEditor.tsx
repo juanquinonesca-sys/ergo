@@ -7,7 +7,8 @@ import {
     useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
-import { ActionContextProvider } from "../../../actions/runtime";
+import { ActionContextProvider, useActionDispatcher } from "../../../actions/runtime";
+import { paletteDropHandlers } from "../../../editor/prosemirror/paletteDrop";
 import { EditorState, TextSelection, type Selection, type Transaction } from "prosemirror-state";
 import type { Node as PMNode } from "prosemirror-model";
 import { EditorView } from "prosemirror-view";
@@ -209,6 +210,9 @@ const ProseMirrorBodyEditorImpl = ({
     const mountRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const pluginsRef = useRef<ReturnType<typeof bodyPlugins> | null>(null);
+    const dispatchAction = useActionDispatcher();
+    const dispatchActionRef = useRef(dispatchAction);
+    dispatchActionRef.current = dispatchAction;
     const portalRegistryRef = useRef<NodeViewPortalRegistry>(
         new NodeViewPortalRegistry(),
     );
@@ -497,6 +501,11 @@ const ProseMirrorBodyEditorImpl = ({
                     setActiveBodyView(view);
                     return false;
                 },
+                ...paletteDropHandlers((invocation) => {
+                    void dispatchActionRef.current(invocation, {
+                        fromContextId: `body-${sectionId}`,
+                    });
+                }),
             },
         });
         viewRef.current = view;

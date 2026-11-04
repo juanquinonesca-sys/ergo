@@ -40,3 +40,6 @@ src-tauri/references.bib
 docs/
 screenshots/
 
+
+# graphify
+graphify-out/

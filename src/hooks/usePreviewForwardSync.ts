@@ -60,7 +60,7 @@ export function usePreviewForwardSync({
         usePreviewViewportAnchor(scrollRef, previewPages);
     const userScrolledAwayRef = useRef(false);
 
-    const { caret, carets, resolvedRevision } = usePreviewCaret({
+    const { caret, carets, resolvedRevision, caretTargetKey } = usePreviewCaret({
         previewRevision,
         debounceMs: forwardSyncDebounceMs,
         centerPageRef,
@@ -78,6 +78,7 @@ export function usePreviewForwardSync({
         // (matched or not); it gates the content-change scroll so the preview only
         // chases the caret once forward sync has settled for this revision.
         caretRevision: resolvedRevision,
+        caretTargetKey,
         zoom,
         anchorPageRef,
         pageVisibilityRef,

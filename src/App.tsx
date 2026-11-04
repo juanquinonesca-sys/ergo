@@ -944,6 +944,7 @@ const AppShellContent = () => {
                     keymap={keymap}
                     onCommand={runCommand}
                     isCommandEnabled={isCommandEnabled}
+                    isDirty={isDirty}
                 />
                 {hasActiveProject ? (
                     <ActionContextProvider id="workspace" contexts={["workspace"]}>

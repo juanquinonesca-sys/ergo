@@ -1,11 +1,13 @@
 import {
     memo,
     useCallback,
+    useEffect,
     useMemo,
     useRef,
     useState,
     useSyncExternalStore,
 } from "react";
+import type { ActionInvocation } from "../../../bindings/ActionInvocation";
 import type { DocumentResources } from "../../../bindings/DocumentResources";
 import {
     useDocumentActions,
@@ -46,9 +48,26 @@ import styles from "./Editor.module.css";
 import type { InputSchema } from "../../../bindings/InputSchema";
 import type { TemplateSpec } from "../../../bindings/TemplateSpec";
 import {
+    projectInputElementId,
     projectInputFieldId,
     simpleListComposerFieldId,
 } from "../../../editor/fieldIds";
+import { Button } from "../../atoms/Button/Button";
+import { countMissingRequired } from "../../../template/fieldImportance";
+
+type EditorView = "template" | "document";
+
+/** One-line inputs sit two per row in the template form; the rest span it. */
+const SINGLE_LINE_INPUT_TYPES = new Set<InputSchema["type"]>([
+    "string",
+    "integer",
+    "float",
+]);
+
+const EDITOR_VIEWS: { id: EditorView; label: () => string }[] = [
+    { id: "template", label: m.editor_zone_template },
+    { id: "document", label: m.editor_zone_document },
+];
 import { parseInputRichText } from "../../../editor/richTextMarks";
 import {
     contentBlocksSignificantlyEqual,
@@ -157,6 +176,23 @@ const EditorComponent = ({
     );
     const dispatchAction = useActionDispatcher();
     const [referenceDialogOpen, setReferenceDialogOpen] = useState(false);
+
+    // The template form and the document body are two views of the column. The
+    // view follows document focus (a preview click on the cover lands on the
+    // form, one on the body lands on the document); the switch changes it by hand.
+    const [view, setView] = useState<EditorView>("document");
+    useEffect(() => {
+        if (focusElementId) {
+            setView(focusElementId === projectInputElementId ? "template" : "document");
+        }
+    }, [focusElementId]);
+    const selectView = useCallback((next: EditorView) => {
+        // Don't leave the caret in a view that is about to be hidden.
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+        setView(next);
+    }, []);
 
     const applyReferenceInsert = useCallback(
         (pick: { referenceId: string; label: string }) => {
@@ -404,37 +440,21 @@ const EditorComponent = ({
                     id: "editor::InsertHeading",
                     payload: { level },
                 }),
-            onInsertParagraph: () =>
-                void dispatchAction({ id: "editor::InsertParagraph", payload: null }),
-            onInsertQuote: () =>
-                void dispatchAction({ id: "editor::InsertQuote", payload: null }),
-            onInsertList: () =>
-                void dispatchAction({ id: "editor::InsertList", payload: null }),
-            onInsertEnumeration: () =>
-                void dispatchAction({
-                    id: "editor::InsertEnumeration",
-                    payload: null,
-                }),
-            onInsertTable: () =>
-                void dispatchAction({ id: "editor::InsertTable", payload: null }),
-            onInsertBlockEquation: () =>
-                void dispatchAction({
-                    id: "editor::InsertBlockEquation",
-                    payload: null,
-                }),
-            onInsertInlineEquation: () =>
-                void dispatchAction({
-                    id: "editor::InsertInlineEquation",
-                    payload: null,
-                }),
-            onInsertFigure: () =>
-                void dispatchAction({ id: "editor::InsertFigure", payload: null }),
-            onInsertDiagram: () =>
-                void dispatchAction({ id: "editor::InsertDiagram", payload: null }),
-            onInsertReference: () =>
-                void dispatchAction({ id: "editor::InsertReference", payload: null }),
+            onInsert: (invocation: ActionInvocation) =>
+                void dispatchAction(invocation),
         }),
         [dispatchAction],
+    );
+
+    const formSchemas = useMemo(
+        () =>
+            groups.flatMap((group) =>
+                group.inputs.flatMap((id) => inputsMap.get(id) ?? []),
+            ),
+        [groups, inputsMap],
+    );
+    const missingRequired = useDocumentAstSelector((s) =>
+        countMissingRequired(formSchemas, s.inputs as Record<string, unknown>),
     );
 
     return (
@@ -445,12 +465,39 @@ const EditorComponent = ({
             handlers={editorHandlersWithDelete}
         >
             <main className={styles.editor}>
-                <EditorToolbar
-                    canDeleteFocusedTarget={canDeleteFocusedTarget}
-                    activeTextMarks={activeTextMarks}
-                    tableCellEditing={tableCellEditing}
-                    {...toolbarHandlers}
-                />
+                {groups.length > 0 && (
+                    <div className={styles.viewSwitch} role="tablist">
+                        {EDITOR_VIEWS.map(({ id, label }) => (
+                            <Button
+                                key={id}
+                                variant="ghost"
+                                size="small"
+                                role="tab"
+                                aria-selected={view === id}
+                                className={view === id ? styles.viewSwitchActive : undefined}
+                                onClick={() => selectView(id)}
+                            >
+                                {label()}
+                                {id === "template" && missingRequired > 0 && (
+                                    <span
+                                        className={styles.missingBadge}
+                                        title={m.editor_missing_required({ count: missingRequired })}
+                                    >
+                                        {missingRequired}
+                                    </span>
+                                )}
+                            </Button>
+                        ))}
+                    </div>
+                )}
+                {(view === "document" || groups.length === 0) && (
+                    <EditorToolbar
+                        canDeleteFocusedTarget={canDeleteFocusedTarget}
+                        activeTextMarks={activeTextMarks}
+                        tableCellEditing={tableCellEditing}
+                        {...toolbarHandlers}
+                    />
+                )}
                 <FindBar
                     ref={findBarRef}
                     open={findBarOpen}
@@ -471,6 +518,10 @@ const EditorComponent = ({
                 />
 
                 <div className={styles.editorScroll}>
+                <div
+                    className={styles.viewPane}
+                    hidden={view !== "template" || groups.length === 0}
+                >
                 {groups.map((group) => (
                     <section key={group.id} className={styles.templateGroupCard}>
                         <h2>{t(group.label)}</h2>
@@ -479,18 +530,31 @@ const EditorComponent = ({
                                 const schema = inputsMap.get(inputId);
                                 if (!schema) return null;
                                 return (
-                                    <DynamicField
+                                    <div
                                         key={inputId}
-                                        schema={schema}
-                                        path={`/${inputId}`}
-                                        label={schema.label ? t(schema.label) : undefined}
-                                    />
+                                        className={
+                                            SINGLE_LINE_INPUT_TYPES.has(schema.type)
+                                                ? styles.fieldShort
+                                                : styles.fieldWide
+                                        }
+                                    >
+                                        <DynamicField
+                                            schema={schema}
+                                            path={`/${inputId}`}
+                                            label={schema.label ? t(schema.label) : undefined}
+                                        />
+                                    </div>
                                 );
                             })}
                         </div>
                     </section>
                 ))}
 
+                </div>
+                <div
+                    className={styles.viewPane}
+                    hidden={view !== "document" && groups.length > 0}
+                >
                 {contentSectionIds.map((sectionId, index) => (
                     <ProseMirrorBodyEditor
                         key={sectionId}
@@ -498,6 +562,7 @@ const EditorComponent = ({
                         autoFocus={index === 0}
                     />
                 ))}
+                </div>
                 </div>
             </main>
         </ActionContextProvider>
@@ -522,12 +587,12 @@ const getFieldLabel = (schema: InputSchema, label?: string, t?: (key: string) =>
     return t ? t(raw) : raw;
 };
 
-const getFieldPlaceholder = (schema: InputSchema, label?: string, t?: (key: string) => string) => {
+/** Only a description makes a useful placeholder; repeating the label above the
+ *  field inside it ("Nombre" / "Nombre") just adds noise. */
+const getFieldPlaceholder = (schema: InputSchema, t?: (key: string) => string) => {
     const description = schema.description?.trim();
-    if (description) {
-        return t ? t(description) : description;
-    }
-    return getFieldLabel(schema, label, t);
+    if (!description) return "";
+    return t ? t(description) : description;
 };
 
 // Memoized: a body keystroke re-renders the top-level Editor, but the form
@@ -704,7 +769,7 @@ const DynamicFieldAuthors = ({ schema, path, label }: DynamicFieldProps) => {
             }
             namePlaceholder={
                 nameProperty
-                    ? getFieldPlaceholder(nameProperty, undefined, t)
+                    ? getFieldPlaceholder(nameProperty, t)
                     : ""
             }
             referenceStyle={referenceStyle}
@@ -862,7 +927,7 @@ const DynamicFieldEquation = ({ schema, path, label }: DynamicFieldProps) => {
                 fullWidth
                 label={getFieldLabel(schema, label, t)}
                 importance={fieldLabelImportance(schema.importance)}
-                placeholder={getFieldPlaceholder(schema, label, t)}
+                placeholder={getFieldPlaceholder(schema, t)}
                 value={draft}
                 onChange={(event) => {
                     const next = normalizeEditableText(event.target.value);
@@ -914,7 +979,7 @@ const DynamicFieldString = ({ schema, path, label }: DynamicFieldProps) => {
             fullWidth
             label={getFieldLabel(schema, label, t)}
             importance={fieldLabelImportance(schema.importance)}
-            placeholder={getFieldPlaceholder(schema, label, t)}
+            placeholder={getFieldPlaceholder(schema, t)}
             value={draft}
             onChange={(event) => {
                 const next = normalizeEditableText(event.target.value);

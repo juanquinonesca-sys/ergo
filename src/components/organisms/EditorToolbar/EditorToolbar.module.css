@@ -3,3 +3,42 @@
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
 }
+
+.insertTrigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.insertTrigger svg {
+    width: var(--size-icon);
+    height: var(--size-icon);
+}
+
+.menuItemRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+}
+
+.menuItemIcon {
+    display: inline-flex;
+    color: var(--color-text-secondary);
+}
+
+.menuItemIcon svg {
+    width: var(--size-icon);
+    height: var(--size-icon);
+}
+
+.menuItemLabel {
+    flex: 1;
+}
+
+.menuShortcut {
+    margin-left: var(--space-4);
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+}

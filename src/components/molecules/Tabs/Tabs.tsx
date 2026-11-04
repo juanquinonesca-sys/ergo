@@ -4,8 +4,7 @@ import styles from "./Tabs.module.css";
 export interface TabItem {
     id: string;
     label: string;
-    /** Optional glyph shown instead of the label; `label` becomes the
-     *  accessible name and tooltip when set. */
+    /** Optional glyph shown above the label. */
     icon?: ReactNode;
     panel: ReactNode;
 }
@@ -80,7 +79,6 @@ export const Tabs = ({ tabs, defaultTabId, ariaLabel, className = "" }: TabsProp
                             id={tabDomId(tab.id)}
                             aria-selected={selected}
                             aria-controls={panelDomId(tab.id)}
-                            aria-label={tab.icon ? tab.label : undefined}
                             title={tab.label}
                             tabIndex={selected ? 0 : -1}
                             className={
@@ -90,16 +88,15 @@ export const Tabs = ({ tabs, defaultTabId, ariaLabel, className = "" }: TabsProp
                             }
                             onClick={() => setActiveId(tab.id)}
                         >
-                            {tab.icon ? (
+                            {tab.icon && (
                                 <span
                                     className={styles.tabIcon}
                                     aria-hidden="true"
                                 >
                                     {tab.icon}
                                 </span>
-                            ) : (
-                                tab.label
                             )}
+                            <span className={styles.tabLabel}>{tab.label}</span>
                         </button>
                     );
                 })}

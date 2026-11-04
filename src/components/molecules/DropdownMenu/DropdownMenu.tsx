@@ -134,8 +134,18 @@ export const DropdownMenu = ({
             setOpen(false);
         };
 
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setOpen(false);
+            }
+        };
+
         window.addEventListener("mousedown", handlePointerDown);
-        return () => window.removeEventListener("mousedown", handlePointerDown);
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("mousedown", handlePointerDown);
+            window.removeEventListener("keydown", handleKeyDown);
+        };
     }, [open, setOpen]);
 
     // React 19 exposes an element's ref as a regular prop.

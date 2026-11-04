@@ -28,6 +28,7 @@ import { blockFocusInvariantPlugin } from "./blockFocusInvariant";
 import { findPlugin } from "../find/prosemirrorFindPlugin";
 import { textMarkStatePlugin } from "./textMarkStatePlugin";
 import { activeBlockPlugin } from "./activeBlockPlugin";
+import { emptyDocPlaceholderPlugin } from "./emptyDocPlaceholderPlugin";
 
 /**
  * Flag set on the transaction `idNormalizer` appends when it reassigns one or
@@ -227,4 +228,5 @@ export const bodyPlugins = () => [
     findPlugin(),
     textMarkStatePlugin(),
     activeBlockPlugin(),
+    emptyDocPlaceholderPlugin(),
 ];

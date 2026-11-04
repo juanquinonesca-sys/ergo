@@ -1,32 +1,39 @@
 import { memo, useCallback, useState, type MouseEvent } from "react";
 import {
-    Diagram24Regular,
+    Add24Regular,
+    ChevronDown16Regular,
+    Delete24Regular,
     TextBold24Regular,
-    TextBulletList24Regular,
     TextHeader124Regular,
     TextItalic24Regular,
-    TextNumberListLtr24Regular,
-    TextQuote24Regular,
     TextUnderline24Regular,
-    Table24Regular,
-    MathFormula24Regular,
-    Image24Regular,
-    Link24Regular,
-    Delete24Regular,
 } from "@fluentui/react-icons";
+import type { ActionId } from "../../../bindings/ActionId";
+import type { ActionInvocation } from "../../../bindings/ActionInvocation";
 import { IconButton } from "../../atoms/IconButton/IconButton";
+import { MenuItemButton } from "../../atoms/MenuItemButton/MenuItemButton";
+import { ToolbarTextButton } from "../../atoms/ToolbarTextButton/ToolbarTextButton";
+import { DropdownMenu } from "../../molecules/DropdownMenu/DropdownMenu";
 import { SplitButton } from "../../molecules/SplitButton/SplitButton";
 import { Toolbar, ToolbarGroup } from "../../molecules/Toolbar/Toolbar";
-import { TextParagraph24Regular } from "../../icons/TextParagraph24Regular";
-import { SquareRoot24Regular } from "../../icons/SquareRoot24Regular";
 import { clampHeadingLevel, headingLevelOptions } from "../../../editor/headingLevels";
 import type { ActiveTextMarks } from "../../../editor/prosemirror/textMarkState";
+import { TABLE_CELL_FORBIDDEN_ACTION_IDS } from "../../../editor/prosemirror/table/tableCellInsertPolicy";
+import { useKeymap } from "../../../settings/SettingsProvider";
+import { lookupActionShortcut } from "../../../settings/keymap/profile";
 import { m } from "../../../paraglide/messages.js";
+import { INSERTABLE_ELEMENTS } from "./insertableElements";
+import styles from "./EditorToolbar.module.css";
 
 /** Keep ProseMirror selection when toolbar buttons are clicked. */
 const keepEditorSelection = (event: MouseEvent) => {
     event.preventDefault();
 };
+
+/** Headings have their own split button; the Insert menu lists the rest. */
+const INSERT_MENU_ITEMS = INSERTABLE_ELEMENTS.filter(
+    (item) => item.invocation.id !== "editor::InsertHeading",
+);
 
 export interface EditorToolbarProps {
     canDeleteFocusedTarget: boolean;
@@ -38,16 +45,7 @@ export interface EditorToolbarProps {
     onItalic: () => void;
     onUnderline: () => void;
     onInsertHeading: (level: number) => void;
-    onInsertParagraph: () => void;
-    onInsertQuote: () => void;
-    onInsertList: () => void;
-    onInsertEnumeration: () => void;
-    onInsertTable: () => void;
-    onInsertBlockEquation: () => void;
-    onInsertInlineEquation: () => void;
-    onInsertFigure: () => void;
-    onInsertDiagram: () => void;
-    onInsertReference: () => void;
+    onInsert: (invocation: ActionInvocation) => void;
 }
 
 export const EditorToolbar = memo(
@@ -60,18 +58,17 @@ export const EditorToolbar = memo(
         onItalic,
         onUnderline,
         onInsertHeading,
-        onInsertParagraph,
-        onInsertQuote,
-        onInsertList,
-        onInsertEnumeration,
-        onInsertTable,
-        onInsertBlockEquation,
-        onInsertInlineEquation,
-        onInsertFigure,
-        onInsertDiagram,
-        onInsertReference,
+        onInsert,
     }: EditorToolbarProps) => {
         const [headingLevel, setHeadingLevel] = useState(1);
+        const [insertOpen, setInsertOpen] = useState(false);
+        const { keymap } = useKeymap();
+
+        /** "Negrita · Ctrl+B" when the action has a binding, else just the label. */
+        const withShortcut = (label: string, actionId: ActionId) => {
+            const shortcut = lookupActionShortcut(keymap, actionId);
+            return shortcut ? `${label} · ${shortcut}` : label;
+        };
 
         const insertAtHeadingLevel = useCallback(
             (nextLevel: number) => {
@@ -86,7 +83,7 @@ export const EditorToolbar = memo(
             <Toolbar scrollable>
             <ToolbarGroup>
                 <IconButton
-                    title={m.element_delete()}
+                    title={withShortcut(m.element_delete(), "editor::DeleteElement")}
                     aria-label={m.element_delete()}
                     disabled={!canDeleteFocusedTarget}
                     onClick={onDelete}
@@ -96,7 +93,7 @@ export const EditorToolbar = memo(
             </ToolbarGroup>
             <ToolbarGroup>
                 <IconButton
-                    title={m.menubar_text_bold()}
+                    title={withShortcut(m.menubar_text_bold(), "editor::Bold")}
                     aria-label={m.menubar_text_bold()}
                     pressed={activeTextMarks.bold}
                     onMouseDown={keepEditorSelection}
@@ -105,7 +102,7 @@ export const EditorToolbar = memo(
                     <TextBold24Regular />
                 </IconButton>
                 <IconButton
-                    title={m.menubar_text_italic()}
+                    title={withShortcut(m.menubar_text_italic(), "editor::Italic")}
                     aria-label={m.menubar_text_italic()}
                     pressed={activeTextMarks.italic}
                     onMouseDown={keepEditorSelection}
@@ -114,7 +111,7 @@ export const EditorToolbar = memo(
                     <TextItalic24Regular />
                 </IconButton>
                 <IconButton
-                    title={m.menubar_text_underline()}
+                    title={withShortcut(m.menubar_text_underline(), "editor::Underline")}
                     aria-label={m.menubar_text_underline()}
                     pressed={activeTextMarks.underline}
                     onMouseDown={keepEditorSelection}
@@ -136,87 +133,54 @@ export const EditorToolbar = memo(
                         insertAtHeadingLevel(Number(value))
                     }
                 />
-                <IconButton
-                    title={m.menubar_insert_paragraph()}
-                    aria-label={m.menubar_insert_paragraph()}
-                    onClick={onInsertParagraph}
-                >
-                    <TextParagraph24Regular aria-hidden />
-                </IconButton>
-                <IconButton
-                    title={m.menubar_insert_quote()}
-                    aria-label={m.menubar_insert_quote()}
-                    onClick={onInsertQuote}
-                >
-                    <TextQuote24Regular />
-                </IconButton>
-                <IconButton
-                    title={m.menubar_insert_list()}
-                    aria-label={m.menubar_insert_list()}
-                    onClick={onInsertList}
-                >
-                    <TextBulletList24Regular />
-                </IconButton>
-                <IconButton
-                    title={m.menubar_insert_enumeration()}
-                    aria-label={m.menubar_insert_enumeration()}
-                    onClick={onInsertEnumeration}
-                >
-                    <TextNumberListLtr24Regular />
-                </IconButton>
-                <IconButton
-                    title={m.menubar_insert_table()}
-                    aria-label={m.menubar_insert_table()}
-                    disabled={tableCellEditing}
-                    onClick={onInsertTable}
-                >
-                    <Table24Regular />
-                </IconButton>
             </ToolbarGroup>
             <ToolbarGroup>
-                <IconButton
-                    title={m.menubar_insert_block_equation()}
-                    aria-label={m.menubar_insert_block_equation()}
-                    onMouseDown={keepEditorSelection}
-                    onClick={onInsertBlockEquation}
+                <DropdownMenu
+                    align="start"
+                    menuLabel={m.editor_insert_menu()}
+                    open={insertOpen}
+                    onOpenChange={setInsertOpen}
+                    trigger={
+                        <ToolbarTextButton
+                            className={styles.insertTrigger}
+                            onMouseDown={keepEditorSelection}
+                        >
+                            <Add24Regular aria-hidden />
+                            {m.editor_insert_menu()}
+                            <ChevronDown16Regular aria-hidden />
+                        </ToolbarTextButton>
+                    }
                 >
-                    <MathFormula24Regular />
-                </IconButton>
-                <IconButton
-                    title={m.menubar_insert_inline_equation()}
-                    aria-label={m.menubar_insert_inline_equation()}
-                    onMouseDown={keepEditorSelection}
-                    onClick={onInsertInlineEquation}
-                >
-                    <SquareRoot24Regular />
-                </IconButton>
-            </ToolbarGroup>
-            <ToolbarGroup>
-                <IconButton
-                    title={m.menubar_insert_figure()}
-                    aria-label={m.menubar_insert_figure()}
-                    disabled={tableCellEditing}
-                    onClick={onInsertFigure}
-                >
-                    <Image24Regular />
-                </IconButton>
-                <IconButton
-                    title={m.menubar_insert_diagram()}
-                    aria-label={m.menubar_insert_diagram()}
-                    disabled={tableCellEditing}
-                    onClick={onInsertDiagram}
-                >
-                    <Diagram24Regular />
-                </IconButton>
-            </ToolbarGroup>
-            <ToolbarGroup>
-                <IconButton
-                    title={m.menubar_insert_reference()}
-                    aria-label={m.menubar_insert_reference()}
-                    onClick={onInsertReference}
-                >
-                    <Link24Regular />
-                </IconButton>
+                    {INSERT_MENU_ITEMS.map(({ invocation, icon, label }) => {
+                        const shortcut = lookupActionShortcut(keymap, invocation.id);
+                        return (
+                            <MenuItemButton
+                                key={invocation.id}
+                                role="menuitem"
+                                variant="dropdown"
+                                disabled={
+                                    tableCellEditing &&
+                                    TABLE_CELL_FORBIDDEN_ACTION_IDS.includes(invocation.id)
+                                }
+                                onMouseDown={keepEditorSelection}
+                                onClick={() => {
+                                    setInsertOpen(false);
+                                    onInsert(invocation);
+                                }}
+                            >
+                                <span className={styles.menuItemRow}>
+                                    <span className={styles.menuItemIcon} aria-hidden>
+                                        {icon}
+                                    </span>
+                                    <span className={styles.menuItemLabel}>{label()}</span>
+                                    {shortcut && (
+                                        <span className={styles.menuShortcut}>{shortcut}</span>
+                                    )}
+                                </span>
+                            </MenuItemButton>
+                        );
+                    })}
+                </DropdownMenu>
             </ToolbarGroup>
         </Toolbar>
         );

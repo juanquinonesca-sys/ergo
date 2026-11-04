@@ -61,6 +61,22 @@
     height: 100%;
 }
 
+/* Save state: small, fixed-width text in the chrome; never shifts the preview. */
+.saveState,
+.saveStateDirty {
+    flex-shrink: 0;
+    padding: 0 var(--space-3);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+}
+
+.saveStateDirty::before {
+    content: "●";
+    margin-right: var(--space-1);
+    color: var(--color-warning);
+}
+
 .windowControls {
     display: flex;
     align-items: center;

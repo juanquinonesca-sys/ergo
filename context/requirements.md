@@ -25,14 +25,16 @@
 
 ## Epic 3: Workspace and navigation
 
-- **REQ3.1:** The workspace shall present three resizable columns—sidebar, editor (metadata form + body), and live preview—with persisted split ratios.
-- **REQ3.2:** The sidebar shall switch among **Outline** (compiled structure, jump to fields/elements), **Bibliography** (reference CRUD), and **Resources** (figures, tables, diagrams, equations with WASM resource previews).
-- **REQ3.3:** The editor toolbar shall insert and convert body elements (paragraph, headings levels 1–6, table, figure, block/inline equation, quote, list, diagram) via actions routed through the action runtime.
+- **REQ3.1:** The workspace shall present three resizable columns—sidebar, editor (switchable between a template-form view and a document-body view that follows editor focus), and live preview—with persisted split ratios.
+- **REQ3.2:** The sidebar shall switch among **Outline** (compiled structure, jump to fields/elements), **Elements** (insertable body elements), **Bibliography** (reference CRUD), and **Resources** (figures, tables, diagrams, equations with WASM resource previews).
+- **REQ3.3:** The editor toolbar shall provide text formatting, headings levels 1–6, and an **Insert** menu listing every insertable body element with its effective shortcut; tooltips shall show effective shortcuts, and all entries shall dispatch actions through the action runtime.
 - **REQ3.4:** The menubar shall provide localized menus for file (project lifecycle, PDF export, bibliography export), insert (subset of body elements), view (command palette, sidebar toggles, zoom), settings, and help placeholders.
 - **REQ3.5:** The application shall provide a command palette on the welcome screen and in the workspace to search and invoke catalog actions with the same routing as menus and shortcuts.
 - **REQ3.6:** The application shall provide a find bar to search the document AST and ProseMirror body, step matches, and replace text with preview highlighting in the editor.
 - **REQ3.7:** The application shall resolve logical-key shortcuts in Rust (`default_keymap.json` + user overrides) and dispatch actions through a context tree (app, workspace, editor, body, table cell, dialog, bibliography panel, and related contexts) without a frontend fallback resolver.
 - **REQ3.8:** The application shall allow remapping any catalog action in settings; menubar labels shall show effective shortcuts for the active profile.
+- **REQ3.9:** The Elements sidebar panel shall list every insertable body element; dragging one into the body shall insert it at the drop point, and clicking one shall insert it at the caret, both dispatching the same `ActionInvocation` as the toolbar and shortcuts.
+- **REQ3.10:** With a project open, the title bar shall show whether all edits are saved or there are unsaved changes, without shifting the workspace layout.
 
 ## Epic 4: Document editing (no-code body and forms)
 
@@ -49,7 +51,9 @@
 - **REQ4.11:** The application shall open an element settings panel for the focused table, figure, equation, quote, or list via toolbar or shortcut.
 - **REQ4.12:** The application shall confirm before deleting a focused body element.
 - **REQ4.13:** User text in generated Typst shall be escaped or sanitized so raw Typst markup cannot be injected from standard form fields.
-- **REQ4.14:** The application shall render template inputs as strings, rich text, content blocks, simple lists, object groups, arrays (authorities, symbols, abbreviations), and equation fields, with labels translated via template locale messages and Paraglide UI strings.
+- **REQ4.14:** The application shall render template inputs as strings, rich text, content blocks, simple lists, object groups, arrays (authorities, symbols, abbreviations), and equation fields, with labels translated via template locale messages and Paraglide UI strings; an empty required input shall compile with its label in the document language as a stand-in.
+- **REQ4.15:** The body surface shall mark the start of each section (level-1 heading after the first block) with a divider rule and extra spacing.
+- **REQ4.16:** An empty document body shall show a non-content hint inviting the user to type or drag an element from the Elements panel.
 
 ## Epic 5: Live preview and persistence
 
@@ -61,7 +65,7 @@
 
 ## Epic 6: Preview ↔ editor synchronization
 
-- **REQ6.1:** After compile, the preview shall scroll toward pages that changed so edits remain visible.
+- **REQ6.1:** After compile, the preview shall scroll toward pages that changed so edits remain visible; when editor focus moves to another element or field, the preview shall bring that spot into view without waiting for a content change.
 - **REQ6.2:** Clicking a preview page shall focus the corresponding editor field or body caret using WASM source maps and `FocusField` actions.
 - **REQ6.3:** Activating outline entries or resource rows shall focus the underlying AST element or metadata field in the editor.
 

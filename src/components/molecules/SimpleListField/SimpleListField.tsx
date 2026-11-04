@@ -28,6 +28,7 @@ import { normalizeEditableText, normalizeRichTextContent } from "../../../editor
 import { useEditorNavigation } from "../../../editor/EditorNavigationContext";
 import { placeCaretAtEnd } from "../../../richText/richText";
 import styles from "./SimpleListField.module.css";
+import { m } from "../../../paraglide/messages.js";
 
 const focusBootstrappedEntry = (
     node: InlineTextInputElement | HTMLDivElement | null,
@@ -381,7 +382,7 @@ const SimpleListStringField = ({
                     }}
                     aria-label={label}
                     variant="inlineComposer"
-                    placeholder={label}
+                    placeholder={m.simple_list_add_hint()}
                     type="text"
                     value=""
                     onChange={(event) => bootstrapNewEntry(event.target.value)}

@@ -94,6 +94,27 @@
     font-size: var(--heading-size-1);
 }
 
+/* Hint on an empty body (emptyDocPlaceholderPlugin); not document content. */
+.bodyPaper > :global(p.ergo-empty-doc) {
+    position: relative;
+}
+
+.bodyPaper > :global(p.ergo-empty-doc)::before {
+    content: attr(data-placeholder);
+    position: absolute;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Each H1 opens a section: a rule and extra space mark where the previous one ends. */
+.bodyPaper > :global(h1):not(:first-child) {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: var(--border-width-sm) solid var(--color-border);
+}
+
 .bodyPaper > :global(h2) {
     font-size: var(--heading-size-2);
 }

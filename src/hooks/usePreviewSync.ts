@@ -37,6 +37,8 @@ export interface UsePreviewSyncOptions {
     /** Revision the caret was resolved for; gates the content-change scroll. */
     caretRevision: number | null;
     /** Effective zoom; a change re-anchors the view so the caret stays visible. */
+    /** Element/field the caret cue belongs to (see `usePreviewCaret`). */
+    caretTargetKey: string | null;
     zoom: number;
     /** Page dominating the viewport, maintained by `usePreviewViewportAnchor`. */
     anchorPageRef: MutableRefObject<number | null>;
@@ -60,6 +62,7 @@ export function usePreviewSync({
     dispatchAction,
     caret,
     caretRevision,
+    caretTargetKey,
     zoom,
     anchorPageRef,
     pageVisibilityRef,
@@ -189,6 +192,29 @@ export function usePreviewSync({
             programmaticScrollRef.current = false;
         });
     }, [previewPages, previewRevision, scrollRef, caret, caretRevision]);
+
+    // Focus moved to another element or field (click, arrow keys, outline jump):
+    // bring its spot into view even without a content change. Moving focus is an
+    // explicit "show me this", so it also ends "browsing away". The caret dead
+    // zone keeps the view still when the spot is already visible.
+    const followedTargetRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (!caret || !caretTargetKey || caretTargetKey === followedTargetRef.current) {
+            return;
+        }
+        followedTargetRef.current = caretTargetKey;
+        const scrollRoot = scrollRef.current;
+        const caretHeightPt = pageHeightPtFor(caret.pageNumber);
+        if (!scrollRoot || caretHeightPt === null) {
+            return;
+        }
+        userScrolledAwayRef.current = false;
+        programmaticScrollRef.current = true;
+        scrollPreviewToCaret(scrollRoot, caret, caretHeightPt);
+        requestAnimationFrame(() => {
+            programmaticScrollRef.current = false;
+        });
+    }, [caret, caretTargetKey, scrollRef]);
 
     // Zooming changes every page's pixel size, so a caret that was on screen would
     // otherwise slide out of view. Re-anchor the scroll to keep the caret centered

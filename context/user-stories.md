@@ -25,14 +25,16 @@
 
 ## Epic 3: Workspace and navigation
 
-- **US3.1 — Tri-column workspace:** Resize three columns—sidebar, editor (metadata form + body), and live preview—with persisted split ratios.
-- **US3.2 — Sidebar panels:** Switch among **Outline** (compiled structure, jump to fields/elements), **Bibliography** (reference CRUD), and **Resources** (figures, tables, diagrams, equations with WASM resource previews).
-- **US3.3 — Editor toolbar:** Insert and convert body elements (paragraph, headings levels 1–6, table, figure, block/inline equation, quote, list, diagram) via toolbar actions routed through the action runtime.
+- **US3.1 — Tri-column workspace:** Resize three columns—sidebar, editor (switchable between a template-form view and a document-body view that follows editor focus), and live preview—with persisted split ratios.
+- **US3.2 — Sidebar panels:** Switch among **Outline** (compiled structure, jump to fields/elements), **Elements** (insertable body elements), **Bibliography** (reference CRUD), and **Resources** (figures, tables, diagrams, equations with WASM resource previews).
+- **US3.3 — Editor toolbar:** Format text, set headings 1–6, and open an **Insert** menu listing every insertable body element with its shortcut; tooltips show effective shortcuts; all entries route through the action runtime.
 - **US3.4 — Menubar:** Localized menus for file (project lifecycle, PDF export, bibliography export), insert (subset of body elements), view (command palette, sidebar toggles, zoom), settings, and help placeholders.
 - **US3.5 — Command palette:** Search and invoke catalog actions from the welcome screen and workspace with the same routing as menus and shortcuts.
 - **US3.6 — Find and replace:** Open a find bar to search the document AST and ProseMirror body, step matches, and replace text with preview highlighting in the editor.
 - **US3.7 — Keyboard actions:** Use logical-key shortcuts resolved in Rust (`default_keymap.json` + user overrides); actions dispatch through a context tree (app, workspace, editor, body, table cell, dialog, bibliography panel, etc.) with no frontend fallback resolver.
 - **US3.8 — Custom keymaps:** Remap any catalog action in settings; menubar labels show effective shortcuts for the active profile.
+- **US3.9 — Element palette:** Drag an element from the Elements panel into the body to insert it where it is dropped, or click it to insert at the caret; both run the same action as the toolbar and shortcuts.
+- **US3.10 — Save state:** See in the title bar whether my edits are saved or there are unsaved changes.
 
 ## Epic 4: Document editing (no-code body and forms)
 
@@ -49,7 +51,9 @@
 - **US4.11 — Element settings:** Open an element settings panel for the focused table, figure, equation, quote, or list via toolbar or shortcut.
 - **US4.12 — Delete confirmation:** Confirm before deleting a focused body element to avoid accidental loss.
 - **US4.13 — Input sanitization:** User text in generated Typst is escaped/sanitized so raw Typst markup cannot be injected from standard form fields.
-- **US4.14 — Template field types:** Render template inputs as strings, rich text, content blocks, simple lists, object groups, arrays (authorities, symbols, abbreviations), and equation fields, with labels translated via template locale messages and Paraglide UI strings.
+- **US4.14 — Template field types:** Render template inputs as strings, rich text, content blocks, simple lists, object groups, arrays (authorities, symbols, abbreviations), and equation fields, with labels translated via template locale messages and Paraglide UI strings; an empty required input previews as its label in the document language.
+- **US4.15 — Section boundaries:** See where a section ends and the next begins: each level-1 heading after the first block carries a divider rule and extra spacing.
+- **US4.16 — Empty body hint:** See a hint in an empty document inviting me to type or drag an element from the Elements panel.
 
 ## Epic 5: Live preview and persistence
 
@@ -61,7 +65,7 @@
 
 ## Epic 6: Preview ↔ editor synchronization
 
-- **US6.1 — Forward sync:** After compile, scroll the preview toward pages that changed so edits remain visible.
+- **US6.1 — Forward sync:** After compile, scroll the preview toward pages that changed so edits remain visible; moving the cursor to another element or field brings its spot into view.
 - **US6.2 — Backward sync:** Click a preview page to focus the corresponding editor field or body caret using WASM source maps and `FocusField` actions.
 - **US6.3 — Outline and resource jumps:** Activate outline entries or resource rows to focus the underlying AST element or metadata field in the editor.
 

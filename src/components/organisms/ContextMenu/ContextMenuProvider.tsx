@@ -11,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { isDebugMenuEnabled } from "../../../settings/debug";
+import { useActionDispatcher } from "../../../actions/runtime";
 import type { ActionId } from "../../../bindings/ActionId";
 import type { CommandContext } from "../../../commands/types";
 import type { CommandRegistry } from "../../../commands/registry";
@@ -42,7 +43,13 @@ const ContextMenuContext = createContext<ContextMenuContextValue | null>(null);
 
 const resolveContextMenuSurface = (
     hasActiveProject: boolean,
-): ContextMenuSurface => (hasActiveProject ? "workspace" : "app");
+    target: EventTarget | null,
+): ContextMenuSurface => {
+    if (!hasActiveProject) return "app";
+    return target instanceof Element && target.closest("[data-ergo-body-editor]")
+        ? "body"
+        : "workspace";
+};
 
 const filterEntries = (
     entries: ContextMenuEntry[],
@@ -85,6 +92,7 @@ export const ContextMenuProvider = ({
     runCommand,
 }: ContextMenuProviderProps) => {
     const [openMenu, setOpenMenu] = useState<OpenMenuState | null>(null);
+    const dispatchAction = useActionDispatcher();
     const menuRef = useRef<HTMLDivElement>(null);
 
     const closeMenu = useCallback(() => {
@@ -114,7 +122,10 @@ export const ContextMenuProvider = ({
         const handleContextMenu = (event: MouseEvent) => {
             openContextMenu(
                 event,
-                resolveContextMenuSurface(commandContext.hasActiveProject),
+                resolveContextMenuSurface(
+                    commandContext.hasActiveProject,
+                    event.target,
+                ),
             );
         };
 
@@ -180,7 +191,11 @@ export const ContextMenuProvider = ({
     const handleSelect = async (entry: ContextMenuEntry) => {
         closeMenu();
         if (entry.type === "command") {
-            await runCommand(entry.commandId);
+            if (entry.payload !== undefined) {
+                await dispatchAction({ id: entry.commandId, payload: entry.payload });
+            } else {
+                await runCommand(entry.commandId);
+            }
             return;
         }
         if (entry.type === "inspect") {
@@ -200,6 +215,8 @@ export const ContextMenuProvider = ({
                 createPortal(
                     <MenuPanel
                         ref={menuRef}
+                        // Keep focus (and the text selection) in the editor.
+                        onMouseDown={(event) => event.preventDefault()}
                         style={{
                             position: "fixed",
                             left: openMenu.x,
@@ -239,15 +256,18 @@ export const ContextMenuProvider = ({
                             }
 
                             const command = commandRegistry.get(entry.commandId);
-                            const label = command?.label ?? entry.commandId;
-                            const enabled = commandRegistry.enabled(
-                                entry.commandId,
-                                commandContext,
-                            );
+                            const label =
+                                entry.label?.() ?? command?.label ?? entry.commandId;
+                            const enabled =
+                                entry.payload !== undefined ||
+                                commandRegistry.enabled(
+                                    entry.commandId,
+                                    commandContext,
+                                );
 
                             return (
                                 <MenuItemButton
-                                    key={entry.commandId}
+                                    key={`${entry.commandId}-${index}`}
                                     variant="dropdown"
                                     role="menuitem"
                                     disabled={!enabled}

@@ -26,6 +26,9 @@ export interface PreviewCaretState {
     /** The preview revision the caret (or its absence) was resolved for; lets the
      *  scroll logic know forward sync has settled before falling back. */
     resolvedRevision: number | null;
+    /** `elementId|fieldId` the current cue was resolved for; changes when focus
+     *  moves to another element or field, so the preview can follow it. */
+    caretTargetKey: string | null;
 }
 
 interface CaretTarget {
@@ -150,6 +153,7 @@ export function usePreviewCaret({
     const [resolvedRevision, setResolvedRevision] = useState<number | null>(
         null,
     );
+    const [caretTargetKey, setCaretTargetKey] = useState<string | null>(null);
     const caretsRef = useRef<PreviewCaret[]>([]);
     const targetRef = useRef<CaretTarget>({
         elementId: null,
@@ -238,6 +242,7 @@ export function usePreviewCaret({
                     // their (scrolled-out) page, so this needs no viewport filter.
                     const selected = multiCaret ? positions : [positions[0]];
                     applyCarets(selected.map(caretFromPosition));
+                    setCaretTargetKey(`${target.elementId}|${target.fieldId ?? ""}`);
                 }
                 setResolvedRevision(target.previewRevision);
                 // Trailing: the caret moved while this query was in flight — go
@@ -263,5 +268,5 @@ export function usePreviewCaret({
         return () => window.clearTimeout(timer);
     }, [elementId, fieldId, caretUtf16Offset, previewRevision, debounceMs, run]);
 
-    return { caret: carets[0] ?? null, carets, resolvedRevision };
+    return { caret: carets[0] ?? null, carets, resolvedRevision, caretTargetKey };
 }

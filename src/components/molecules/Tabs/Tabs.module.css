@@ -43,6 +43,27 @@
     display: inline-flex;
 }
 
+/* With an icon, the tab stacks glyph over a small label so four tabs fit a
+   narrow sidebar without hiding their names behind tooltips. */
+.tab:has(.tabIcon) {
+    /* Width follows the label so longer names are not cut while short ones
+       give up their spare room. */
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--space-px);
+    padding: var(--space-1) var(--space-px) var(--space-px);
+}
+
+.tab:has(.tabIcon) .tabLabel {
+    font-size: calc(var(--font-size-xs) - 0.0625rem);
+}
+
+.tabLabel {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .tabIcon svg {
     width: var(--size-icon);
     height: var(--size-icon);

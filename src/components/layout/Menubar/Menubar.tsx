@@ -32,9 +32,12 @@ export interface MenubarProps {
     keymap: KeymapProfile;
     onCommand: (commandId: ActionId) => void;
     isCommandEnabled: (commandId: ActionId) => boolean;
+    /** Unsaved edits in the open project; drives the save-state label. */
+    isDirty?: boolean;
 }
 
 const MenubarComponent = ({
+    isDirty = false,
     hasActiveProject,
     keymap,
     onCommand,
@@ -299,6 +302,15 @@ const MenubarComponent = ({
             </div>
 
             <div className={styles.dragRegion} data-tauri-drag-region="" />
+            {hasActiveProject && (
+                <span
+                    className={isDirty ? styles.saveStateDirty : styles.saveState}
+                    role="status"
+                    data-tauri-drag-region=""
+                >
+                    {isDirty ? m.menubar_save_state_dirty() : m.menubar_save_state_saved()}
+                </span>
+            )}
             <div className={styles.windowControls}>
                 <WindowControlButton
                     aria-label={m.titlebar_minimize()}
