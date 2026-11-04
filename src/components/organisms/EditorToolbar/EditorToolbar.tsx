@@ -5,6 +5,9 @@ import {
     Delete24Regular,
     TextBold24Regular,
     TextHeader124Regular,
+    TextBulletListAdd24Regular,
+    TextIndentDecreaseLtr24Regular,
+    TextIndentIncreaseLtr24Regular,
     TextItalic24Regular,
     TextUnderline24Regular,
 } from "@fluentui/react-icons";
@@ -17,7 +20,10 @@ import { DropdownMenu } from "../../molecules/DropdownMenu/DropdownMenu";
 import { SplitButton } from "../../molecules/SplitButton/SplitButton";
 import { Toolbar, ToolbarGroup } from "../../molecules/Toolbar/Toolbar";
 import { clampHeadingLevel, headingLevelOptions } from "../../../editor/headingLevels";
-import type { ActiveTextMarks } from "../../../editor/prosemirror/textMarkState";
+import {
+    INACTIVE_TEXT_MARKS,
+    type ActiveTextMarks,
+} from "../../../editor/prosemirror/textMarkState";
 import { TABLE_CELL_FORBIDDEN_ACTION_IDS } from "../../../editor/prosemirror/table/tableCellInsertPolicy";
 import { useKeymap } from "../../../settings/SettingsProvider";
 import { lookupActionShortcut } from "../../../settings/keymap/profile";
@@ -46,12 +52,15 @@ export interface EditorToolbarProps {
     onUnderline: () => void;
     onInsertHeading: (level: number) => void;
     onInsert: (invocation: ActionInvocation) => void;
+    onAddListSubItem: () => void;
+    onIndentListItem: () => void;
+    onOutdentListItem: () => void;
 }
 
 export const EditorToolbar = memo(
     ({
         canDeleteFocusedTarget,
-        activeTextMarks = { bold: false, italic: false, underline: false },
+        activeTextMarks = INACTIVE_TEXT_MARKS,
         tableCellEditing = false,
         onDelete,
         onBold,
@@ -59,6 +68,9 @@ export const EditorToolbar = memo(
         onUnderline,
         onInsertHeading,
         onInsert,
+        onAddListSubItem,
+        onIndentListItem,
+        onOutdentListItem,
     }: EditorToolbarProps) => {
         const [headingLevel, setHeadingLevel] = useState(1);
         const [insertOpen, setInsertOpen] = useState(false);
@@ -134,6 +146,35 @@ export const EditorToolbar = memo(
                     }
                 />
             </ToolbarGroup>
+            {activeTextMarks.inListItem && (
+                <ToolbarGroup>
+                    <IconButton
+                        title={m.action_editor_add_list_sub_item()}
+                        aria-label={m.action_editor_add_list_sub_item()}
+                        onMouseDown={keepEditorSelection}
+                        onClick={onAddListSubItem}
+                    >
+                        <TextBulletListAdd24Regular />
+                    </IconButton>
+                    <IconButton
+                        // Tab / Shift+Tab are handled by the body editor itself.
+                        title={`${m.action_editor_outdent_list_item()} · Shift+Tab`}
+                        aria-label={m.action_editor_outdent_list_item()}
+                        onMouseDown={keepEditorSelection}
+                        onClick={onOutdentListItem}
+                    >
+                        <TextIndentDecreaseLtr24Regular />
+                    </IconButton>
+                    <IconButton
+                        title={`${m.action_editor_indent_list_item()} · Tab`}
+                        aria-label={m.action_editor_indent_list_item()}
+                        onMouseDown={keepEditorSelection}
+                        onClick={onIndentListItem}
+                    >
+                        <TextIndentIncreaseLtr24Regular />
+                    </IconButton>
+                </ToolbarGroup>
+            )}
             <ToolbarGroup>
                 <DropdownMenu
                     align="start"

@@ -96,6 +96,7 @@ import { insertBodyReference } from "../../../editor/prosemirror/bodyInsert";
 import { subscribeActiveTableCellSession } from "../../../editor/prosemirror/table/tableStructureBridge";
 import {
     getActiveTextMarksSnapshot,
+    INACTIVE_TEXT_MARKS,
     subscribeActiveTextMarks,
 } from "../../../editor/prosemirror/textMarkState";
 import { isActiveTableCellEditing } from "../../../editor/prosemirror/table/tableCellInsertPolicy";
@@ -270,10 +271,13 @@ const EditorComponent = ({
     const fieldNavigationRef = useRef(fieldNavigation);
     fieldNavigationRef.current = fieldNavigation;
 
-    const deleteFocusedElement = useCallback(() => {
+    /** Delete `explicitElementId` (e.g. the right-clicked block) or the focused element. */
+    const deleteFocusedElement = useCallback((explicitElementId?: string) => {
         const focus = focusStore.getSnapshot();
-        const elementId = focus.elementId;
-        const authorIndex = focusedAuthorIndex(elementId, focus.fieldId);
+        const elementId = explicitElementId ?? focus.elementId;
+        const authorIndex = explicitElementId
+            ? null
+            : focusedAuthorIndex(elementId, focus.fieldId);
         if (authorIndex !== null) {
             // Route author removal through the dedicated action rather than
             // dispatching REMOVE_INPUT_ARRAY_ITEM behind editor::DeleteElement.
@@ -311,7 +315,7 @@ const EditorComponent = ({
     const activeTextMarks = useSyncExternalStore(
         subscribeActiveTextMarks,
         getActiveTextMarksSnapshot,
-        () => ({ bold: false, italic: false, underline: false }),
+        () => INACTIVE_TEXT_MARKS,
     );
 
     const editorHandlersWithDelete = useMemo<ActionHandlerMap>(
@@ -328,7 +332,12 @@ const EditorComponent = ({
                 }
                 return false;
             },
-            "editor::DeleteElement": () => deleteFocusedElement(),
+            "editor::DeleteElement": (invocation) => {
+                const payload = invocation.payload as { elementId?: unknown } | null;
+                return deleteFocusedElement(
+                    typeof payload?.elementId === "string" ? payload.elementId : undefined,
+                );
+            },
             "editor::AddTableRow": () => {
                 const focused = getFocusedContentElement();
                 if (focused?.type !== "Table") {
@@ -442,6 +451,12 @@ const EditorComponent = ({
                 }),
             onInsert: (invocation: ActionInvocation) =>
                 void dispatchAction(invocation),
+            onAddListSubItem: () =>
+                void dispatchAction({ id: "editor::AddListSubItem", payload: null }),
+            onIndentListItem: () =>
+                void dispatchAction({ id: "editor::IndentListItem", payload: null }),
+            onOutdentListItem: () =>
+                void dispatchAction({ id: "editor::OutdentListItem", payload: null }),
         }),
         [dispatchAction],
     );

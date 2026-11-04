@@ -35,6 +35,7 @@
 - **REQ3.8:** The application shall allow remapping any catalog action in settings; menubar labels shall show effective shortcuts for the active profile.
 - **REQ3.9:** The Elements sidebar panel shall list every insertable body element; dragging one into the body shall insert it at the drop point, and clicking one shall insert it at the caret, both dispatching the same `ActionInvocation` as the toolbar and shortcuts.
 - **REQ3.10:** With a project open, the title bar shall show whether all edits are saved or there are unsaved changes, without shifting the workspace layout.
+- **REQ3.11:** Right-clicking in the document shall open a menu for what was clicked: text (formatting, convert to heading/paragraph), list item (add sub-item, nest, move up), table cell (add/remove row and column at that cell, merge/split cells, table settings, delete table), and block element such as figure, equation or diagram (element settings, delete that element). Text and list right-clicks first move the caret to the clicked point unless it falls inside the current selection, and every entry dispatches its action from the context that was clicked.
 
 ## Epic 4: Document editing (no-code body and forms)
 
@@ -46,7 +47,7 @@
 - **REQ4.6:** The application shall support image figures (file pick or paste) with configurable width, caption, source, and note fields per template `element_overrides`.
 - **REQ4.7:** The application shall support block and inline equations with Typst or LaTeX **input** syntax; Rust shall sanitize and emit Typst math for compile. A syntax toggle shall be available per field and as a global default.
 - **REQ4.8:** The application shall support block and inline quotes with template-defined attribution fields governed by `quote_policy` on the template spec.
-- **REQ4.9:** The application shall support bullet, numbered, and definition lists with nested item editing.
+- **REQ4.9:** The application shall support bullet, numbered, and definition lists with nested item editing; list levels change with Tab / Shift+Tab and with "Add sub-item" (a new empty item nested under the current one, valid on any item), "Make sub-item" and "Move up a level" actions offered in the toolbar (while the caret is in a list) and in the list right-click menu.
 - **REQ4.10:** The application shall accept Mermaid diagram definitions, generate SVG assets, sync them to the VFS, and show resource previews.
 - **REQ4.11:** The application shall open an element settings panel for the focused table, figure, equation, quote, or list via toolbar or shortcut.
 - **REQ4.12:** The application shall confirm before deleting a focused body element.

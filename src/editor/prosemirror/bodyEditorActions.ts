@@ -8,6 +8,8 @@ import {
     getBodyAstDispatch,
 } from "./activeView";
 import { selectCurrentElement } from "./bodySelection";
+import { addListSubItem, indentListItem, liftListItem } from "./listIndent";
+import { parseTableCellPayload } from "../tableActionPayloads";
 import { enterLockedWholeBlock, runBodyNavigate } from "./bodyTableCommands";
 import { handleTableCellBoundaryArrow } from "./table/tableCellBoundary";
 import {
@@ -136,6 +138,16 @@ export const bodyEditorActionHandlers = (
     "editor::SelectCurrentElement": withBodyView((view) =>
         selectCurrentElement(view.state, view.dispatch.bind(view)),
     ),
+    // Same commands as Tab / Shift+Tab inside a list, for menus and the palette.
+    "editor::AddListSubItem": withBodyView((view) =>
+        addListSubItem(view.state, view.dispatch.bind(view)),
+    ),
+    "editor::IndentListItem": withBodyView((view) =>
+        indentListItem(view.state, view.dispatch.bind(view)),
+    ),
+    "editor::OutdentListItem": withBodyView((view) =>
+        liftListItem(view.state, view.dispatch.bind(view)),
+    ),
     "editor::EnterTable": () => {
         const view = getActiveBodyView();
         if (!view) {
@@ -160,8 +172,9 @@ export const bodyEditorActionHandlers = (
     "editor::MoveTableCellDown": withTableCellMove("down"),
     "editor::MergeTableCells": withActiveTableCellEditor(runMergeTableCells),
     "editor::SplitTableCell": withActiveTableCellEditor(runSplitTableCell),
-    "editor::AddTableRow": () => {
-        const coords = getActiveTableCellCoords();
+    "editor::AddTableRow": (invocation) => {
+        const coords =
+            parseTableCellPayload(invocation.payload) ?? getActiveTableCellCoords();
         const dispatch = getBodyAstDispatch();
         if (!coords || !dispatch) {
             return false;
@@ -172,8 +185,9 @@ export const bodyEditorActionHandlers = (
         });
         return true;
     },
-    "editor::AddTableColumn": () => {
-        const coords = getActiveTableCellCoords();
+    "editor::AddTableColumn": (invocation) => {
+        const coords =
+            parseTableCellPayload(invocation.payload) ?? getActiveTableCellCoords();
         const dispatch = getBodyAstDispatch();
         if (!coords || !dispatch) {
             return false;
@@ -184,8 +198,9 @@ export const bodyEditorActionHandlers = (
         });
         return true;
     },
-    "editor::RemoveTableRow": () => {
-        const coords = getActiveTableCellCoords();
+    "editor::RemoveTableRow": (invocation) => {
+        const coords =
+            parseTableCellPayload(invocation.payload) ?? getActiveTableCellCoords();
         const dispatch = getBodyAstDispatch();
         if (!coords || !dispatch) {
             return false;
@@ -196,8 +211,9 @@ export const bodyEditorActionHandlers = (
         });
         return true;
     },
-    "editor::RemoveTableColumn": () => {
-        const coords = getActiveTableCellCoords();
+    "editor::RemoveTableColumn": (invocation) => {
+        const coords =
+            parseTableCellPayload(invocation.payload) ?? getActiveTableCellCoords();
         const dispatch = getBodyAstDispatch();
         if (!coords || !dispatch) {
             return false;

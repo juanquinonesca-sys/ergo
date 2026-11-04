@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { createListItem } from "../../state/ast/defaults";
 import { elementToNode, listItemParagraph } from "./astBridge";
-import { indentListItem, liftListItem } from "./listIndent";
+import { addListSubItem, indentListItem, liftListItem } from "./listIndent";
 import { bodySchema } from "./schema";
 
 const listDoc = () => {
@@ -105,6 +105,48 @@ describe("list indent commands", () => {
         expect(nestedListInItem(firstItem)).toBeNull();
         expect(list.child(1).textContent).toBe("two");
         expect(list.child(2).textContent).toBe("three");
+    });
+
+    it("adds an empty sub-item under the first item and moves the caret into it", () => {
+        const doc = listDoc();
+        let state = EditorState.create({
+            doc,
+            selection: TextSelection.create(doc, listItemTextPos(doc, 0)),
+        });
+        expect(
+            addListSubItem(state, (tr) => {
+                state = state.apply(tr);
+            }),
+        ).toBe(true);
+
+        const list = state.doc.child(0);
+        expect(list.childCount).toBe(3);
+        const nested = nestedListInItem(list.child(0)) as import("prosemirror-model").Node | null;
+        expect(nested?.childCount).toBe(1);
+        expect(nested?.child(0).textContent).toBe("");
+        expect(state.selection.$from.parent.textContent).toBe("");
+        expect(state.selection.$from.depth).toBeGreaterThan(3);
+    });
+
+    it("appends to an existing sub-list instead of creating another", () => {
+        const doc = listDoc();
+        let state = EditorState.create({
+            doc,
+            selection: TextSelection.create(doc, listItemTextPos(doc, 0)),
+        });
+        const apply = (tr: import("prosemirror-state").Transaction) => {
+            state = state.apply(tr);
+        };
+        addListSubItem(state, apply);
+        state = EditorState.create({
+            doc: state.doc,
+            selection: TextSelection.create(state.doc, listItemTextPos(state.doc, 0)),
+        });
+        addListSubItem(state, apply);
+
+        const firstItem = state.doc.child(0).child(0);
+        expect(firstItem.childCount).toBe(2);
+        expect(firstItem.lastChild?.childCount).toBe(2);
     });
 });
 

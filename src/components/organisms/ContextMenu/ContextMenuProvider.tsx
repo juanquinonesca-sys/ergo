@@ -12,16 +12,20 @@ import {
 import { createPortal } from "react-dom";
 import { isDebugMenuEnabled } from "../../../settings/debug";
 import { useActionDispatcher } from "../../../actions/runtime";
+import { placeBodyCaretAtContextMenu } from "../../../editor/prosemirror/bodyContextMenuCaret";
 import type { ActionId } from "../../../bindings/ActionId";
 import type { CommandContext } from "../../../commands/types";
 import type { CommandRegistry } from "../../../commands/registry";
 import { TauriApi } from "../../../api/tauri";
 import { m } from "../../../paraglide/messages.js";
 import {
-    CONTEXT_MENU_DEFINITIONS,
+    contextMenuEntries,
+    resolveContextMenuSurface,
     type ContextMenuEntry,
     type ContextMenuSurface,
+    type ContextMenuTarget,
 } from "./definitions";
+import { tableCellAtPoint } from "../../../editor/prosemirror/table/tableFocusRegistry";
 import { MenuItemButton } from "../../atoms/MenuItemButton/MenuItemButton";
 import { MenuSeparator } from "../../atoms/MenuSeparator/MenuSeparator";
 import { MenuPanel } from "../../molecules/MenuPanel/MenuPanel";
@@ -29,7 +33,28 @@ import { MenuPanel } from "../../molecules/MenuPanel/MenuPanel";
 type OpenMenuState = {
     x: number;
     y: number;
-    surface: ContextMenuSurface;
+    target: ContextMenuTarget;
+};
+
+/** Everything the menu needs about a right-click, read before the DOM changes. */
+const contextMenuTargetFromEvent = (
+    event: MouseEvent,
+    hasActiveProject: boolean,
+): ContextMenuTarget => {
+    const surface = resolveContextMenuSurface(hasActiveProject, event.target);
+    const element = event.target instanceof Element ? event.target : null;
+    return {
+        surface,
+        fromContextId:
+            element?.closest<HTMLElement>("[data-action-context-id]")?.dataset
+                .actionContextId ?? null,
+        tableCell:
+            surface === "table" && element
+                ? tableCellAtPoint(element, event.clientX, event.clientY)
+                : null,
+        elementId:
+            element?.closest<HTMLElement>("[data-pm-nodeview]")?.dataset.elementId ?? null,
+    };
 };
 
 interface ContextMenuContextValue {
@@ -40,16 +65,6 @@ interface ContextMenuContextValue {
 }
 
 const ContextMenuContext = createContext<ContextMenuContextValue | null>(null);
-
-const resolveContextMenuSurface = (
-    hasActiveProject: boolean,
-    target: EventTarget | null,
-): ContextMenuSurface => {
-    if (!hasActiveProject) return "app";
-    return target instanceof Element && target.closest("[data-ergo-body-editor]")
-        ? "body"
-        : "workspace";
-};
 
 const filterEntries = (
     entries: ContextMenuEntry[],
@@ -105,14 +120,22 @@ export const ContextMenuProvider = ({
                 ReactMouseEvent | MouseEvent,
                 "preventDefault" | "stopPropagation" | "clientX" | "clientY"
             >,
-            surface: ContextMenuSurface,
+            surfaceOrTarget: ContextMenuSurface | ContextMenuTarget,
         ) => {
             event.preventDefault();
             event.stopPropagation();
             setOpenMenu({
                 x: event.clientX,
                 y: event.clientY,
-                surface,
+                target:
+                    typeof surfaceOrTarget === "string"
+                        ? {
+                              surface: surfaceOrTarget,
+                              fromContextId: null,
+                              tableCell: null,
+                              elementId: null,
+                          }
+                        : surfaceOrTarget,
             });
         },
         [],
@@ -120,13 +143,14 @@ export const ContextMenuProvider = ({
 
     useEffect(() => {
         const handleContextMenu = (event: MouseEvent) => {
-            openContextMenu(
+            const target = contextMenuTargetFromEvent(
                 event,
-                resolveContextMenuSurface(
-                    commandContext.hasActiveProject,
-                    event.target,
-                ),
+                commandContext.hasActiveProject,
             );
+            if (target.surface === "body" || target.surface === "bodyList") {
+                placeBodyCaretAtContextMenu(event.clientX, event.clientY);
+            }
+            openContextMenu(event, target);
         };
 
         document.addEventListener("contextmenu", handleContextMenu, {
@@ -151,7 +175,7 @@ export const ContextMenuProvider = ({
             return [];
         }
 
-        const raw = CONTEXT_MENU_DEFINITIONS[openMenu.surface];
+        const raw = contextMenuEntries(openMenu.target);
         return collapseSeparators(
             filterEntries(raw, isDebugMenuEnabled()),
         );
@@ -189,10 +213,16 @@ export const ContextMenuProvider = ({
     }, [closeMenu, openMenu]);
 
     const handleSelect = async (entry: ContextMenuEntry) => {
+        const fromContextId = openMenu?.target.fromContextId ?? null;
         closeMenu();
         if (entry.type === "command") {
-            if (entry.payload !== undefined) {
-                await dispatchAction({ id: entry.commandId, payload: entry.payload });
+            // Dispatch from where the user right-clicked: the menu itself sits
+            // under the `app` context, whose walk never reaches editor handlers.
+            if (fromContextId || entry.payload !== undefined) {
+                await dispatchAction(
+                    { id: entry.commandId, payload: entry.payload ?? null },
+                    { fromContextId },
+                );
             } else {
                 await runCommand(entry.commandId);
             }
@@ -258,12 +288,13 @@ export const ContextMenuProvider = ({
                             const command = commandRegistry.get(entry.commandId);
                             const label =
                                 entry.label?.() ?? command?.label ?? entry.commandId;
-                            const enabled =
-                                entry.payload !== undefined ||
-                                commandRegistry.enabled(
-                                    entry.commandId,
-                                    commandContext,
-                                );
+                            const enabled = entry.isEnabled
+                                ? entry.isEnabled()
+                                : entry.payload !== undefined ||
+                                  commandRegistry.enabled(
+                                      entry.commandId,
+                                      commandContext,
+                                  );
 
                             return (
                                 <MenuItemButton

@@ -15,6 +15,7 @@
  * headingInsert.ts return values typed as `PayloadOf<"editor::...">`.
  */
 import type { ActionId } from "../bindings/ActionId";
+import type { TableCellTarget } from "../editor/prosemirror/table/tableFocusRegistry";
 
 /** Focus-field payload shape (mirrors FocusFieldPayload in useAppActionHandlers). */
 export interface FocusFieldPayload {
@@ -29,8 +30,11 @@ export interface FocusFieldPayload {
 
 /** Per-action payload types. Unlisted actions fall back to `unknown`. */
 export interface ActionPayloadMap {
-    "editor::RemoveTableRow": { rowIndex: number };
-    "editor::RemoveTableColumn": { colIndex: number };
+    "editor::RemoveTableRow": { rowIndex: number } | TableCellTarget;
+    "editor::RemoveTableColumn": { colIndex: number } | TableCellTarget;
+    "editor::AddTableRow": TableCellTarget;
+    "editor::AddTableColumn": TableCellTarget;
+    "editor::DeleteElement": { elementId: string };
     "editor::RemoveAuthor": { index: number };
     "editor::InsertHeading": { level: number };
     "editor::FocusField": FocusFieldPayload;

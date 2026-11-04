@@ -35,6 +35,7 @@
 - **US3.8 — Custom keymaps:** Remap any catalog action in settings; menubar labels show effective shortcuts for the active profile.
 - **US3.9 — Element palette:** Drag an element from the Elements panel into the body to insert it where it is dropped, or click it to insert at the caret; both run the same action as the toolbar and shortcuts.
 - **US3.10 — Save state:** See in the title bar whether my edits are saved or there are unsaved changes.
+- **US3.11 — Context menus:** Right-click text, a list item, a table cell or a figure/equation/diagram and get the options that apply to it (formatting and headings; sub-items; rows, columns and cell merging; settings and delete).
 
 ## Epic 4: Document editing (no-code body and forms)
 
@@ -46,7 +47,7 @@
 - **US4.6 — Figures:** Insert image figures (file pick or paste); configure width, caption, source, and note fields per template `element_overrides`.
 - **US4.7 — Equations:** Edit block and inline equations with Typst or LaTeX **input** syntax; Rust sanitizes and emits Typst math for compile. A syntax toggle is available per field and as a global default.
 - **US4.8 — Quotes:** Insert block and inline quotes with template-defined attribution fields governed by `quote_policy` on the template spec.
-- **US4.9 — Lists:** Insert bullet, numbered, and definition lists with nested item editing.
+- **US4.9 — Lists:** Insert bullet, numbered, and definition lists with nested item editing; change an item's level with Tab / Shift+Tab or the "Add sub-item" / "Make sub-item" / "Move up a level" buttons and right-click entries (right-click acts where you clicked).
 - **US4.10 — Diagrams:** Author Mermaid diagram definitions; the app generates SVG assets, syncs them to the VFS, and shows resource previews.
 - **US4.11 — Element settings:** Open an element settings panel for the focused table, figure, equation, quote, or list via toolbar or shortcut.
 - **US4.12 — Delete confirmation:** Confirm before deleting a focused body element to avoid accidental loss.

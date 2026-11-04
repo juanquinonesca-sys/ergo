@@ -216,6 +216,51 @@ export const liftListItem: Command = (state, dispatch) => {
     return true;
 };
 
+/**
+ * "Add sub-item": a new empty item nested under the item at the caret (appended
+ * to its sub-list, or in a new sub-list of the same kind). Unlike Tab it works
+ * on the first item and on empty items; the caret moves into the new item.
+ */
+export const addListSubItem: Command = (state, dispatch) => {
+    const { $from } = state.selection;
+    const info = listItemAtCursor($from);
+    if (!info) {
+        return false;
+    }
+
+    const { schema } = state;
+    const list = $from.node(info.listDepth);
+    const item = $from.node(info.itemDepth);
+    const existingNested = nestedListInItem(item);
+    const nestedItems: PMNode[] = [];
+    existingNested?.forEach((child) => {
+        nestedItems.push(child);
+    });
+    nestedItems.push(
+        schema.nodes.list_item.create(null, [
+            schema.nodes.paragraph.create({ elementId: "" }),
+        ]),
+    );
+    const newNested = schema.nodes.list.create(
+        existingNested?.attrs ?? { elementId: "", ordered: list.attrs.ordered as boolean },
+        nestedItems,
+    );
+    const newItem = rebuildListItem(schema, item, newNested);
+
+    const itemPos = $from.before(info.itemDepth);
+    let tr = state.tr.replaceWith(itemPos, itemPos + item.nodeSize, newItem);
+    // item open + paragraph + nested-list open, past the earlier sub-items,
+    // then into the new item's paragraph.
+    let caret = itemPos + 1 + listItemParagraph(newItem)!.nodeSize + 1;
+    for (let index = 0; index < nestedItems.length - 1; index += 1) {
+        caret += nestedItems[index].nodeSize;
+    }
+    caret += 2;
+    tr = tr.setSelection(TextSelection.near(tr.doc.resolve(caret), 1));
+    dispatch?.(tr.scrollIntoView());
+    return true;
+};
+
 export const runListTab = (view: EditorView, shiftKey: boolean): boolean => {
     const command = shiftKey ? liftListItem : indentListItem;
     return command(view.state, view.dispatch, view);

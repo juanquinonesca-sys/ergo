@@ -276,6 +276,27 @@ export const isTableEscapeSelection = (state: EditorState): boolean => {
     return tableCellCoordsFromChildState(state) === null;
 };
 
+/** Row/column of the cell containing `pos` in a table child doc (merged cells
+ *  resolve to their top-left slot), or null outside any cell. */
+export const tableCellCoordsAtPos = (
+    state: EditorState,
+    pos: number,
+): { row: number; col: number } | null => {
+    const table = tableNodeInChildDoc(state.doc);
+    if (!table) {
+        return null;
+    }
+    const $pos = state.doc.resolve(pos);
+    for (let depth = $pos.depth; depth > 0; depth -= 1) {
+        const role = $pos.node(depth).type.spec.tableRole;
+        if (role === "cell" || role === "header_cell") {
+            const rect = TableMap.get(table).findCell($pos.before(depth) - 1);
+            return { row: rect.top, col: rect.left };
+        }
+    }
+    return null;
+};
+
 export const tableCellCoordsFromChildState = (
     state: EditorState,
 ): TableCellCoords | null => {

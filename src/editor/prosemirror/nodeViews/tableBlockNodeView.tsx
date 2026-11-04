@@ -24,11 +24,14 @@ import {
     defaultFirstCellFocusTarget,
     isTableEscapeSelection,
     selectionInChildTableForFocus,
+    tableCellCoordsAtPos,
     tableCellCoordsFromChildState,
     tableCellFocusTargetFromState,
 } from "../table/tableCellFocus";
 import {
+    registerTableCellLocator,
     registerTableFocusHandler,
+    unregisterTableCellLocator,
     unregisterTableFocusHandler,
 } from "../table/tableFocusRegistry";
 import { getTableFocusPush } from "../table/tableFocusBridge";
@@ -362,6 +365,12 @@ export const createTableBlockNodeView = (
     };
 
     registerTableFocusHandler(elementId(), applyIncomingFocus);
+    registerTableCellLocator(dom, (clientX, clientY) => {
+        const hit = childView.posAtCoords({ left: clientX, top: clientY });
+        const coords = hit ? tableCellCoordsAtPos(childView.state, hit.pos) : null;
+        return coords ? { tableId: elementId(), ...coords } : null;
+    });
+    dom.setAttribute("data-element-id", elementId());
 
     const isWholeSelected = (blockPos: number): boolean => {
         const { selection } = view.state;
@@ -502,6 +511,7 @@ export const createTableBlockNodeView = (
                 return false;
             }
             currentNode = updated;
+            dom.setAttribute("data-element-id", elementId());
             const incoming = tableFromNode(updated);
             const derived = subDocToTable(childView.state.doc, incoming);
             if (!tableStructurallySynced(derived, incoming)) {
@@ -551,6 +561,7 @@ export const createTableBlockNodeView = (
             dom.removeEventListener("mousedown", onMouseDown);
             dom.removeEventListener("keydown", onKeyDown, true);
             unregisterTableFocusHandler(elementId());
+            unregisterTableCellLocator(dom);
             setActiveTableCellCoords(null);
             setActiveTableCellEditor(null);
             childView.destroy();

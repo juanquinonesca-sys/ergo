@@ -99,6 +99,12 @@ pub enum ActionId {
     EditorUnderline,
     #[serde(rename = "editor::SelectCurrentElement")]
     EditorSelectCurrentElement,
+    #[serde(rename = "editor::AddListSubItem")]
+    EditorAddListSubItem,
+    #[serde(rename = "editor::IndentListItem")]
+    EditorIndentListItem,
+    #[serde(rename = "editor::OutdentListItem")]
+    EditorOutdentListItem,
     #[serde(rename = "editor::AddAuthor")]
     EditorAddAuthor,
     #[serde(rename = "editor::RemoveAuthor")]
@@ -219,6 +225,9 @@ impl ActionId {
             ActionId::EditorItalic => "editor::Italic",
             ActionId::EditorUnderline => "editor::Underline",
             ActionId::EditorSelectCurrentElement => "editor::SelectCurrentElement",
+            ActionId::EditorAddListSubItem => "editor::AddListSubItem",
+            ActionId::EditorIndentListItem => "editor::IndentListItem",
+            ActionId::EditorOutdentListItem => "editor::OutdentListItem",
             ActionId::EditorAddAuthor => "editor::AddAuthor",
             ActionId::EditorRemoveAuthor => "editor::RemoveAuthor",
             ActionId::EditorAddTableRow => "editor::AddTableRow",
@@ -305,6 +314,9 @@ impl FromStr for ActionId {
             "editor::Italic" => Ok(ActionId::EditorItalic),
             "editor::Underline" => Ok(ActionId::EditorUnderline),
             "editor::SelectCurrentElement" => Ok(ActionId::EditorSelectCurrentElement),
+            "editor::AddListSubItem" => Ok(ActionId::EditorAddListSubItem),
+            "editor::IndentListItem" => Ok(ActionId::EditorIndentListItem),
+            "editor::OutdentListItem" => Ok(ActionId::EditorOutdentListItem),
             "editor::AddAuthor" => Ok(ActionId::EditorAddAuthor),
             "editor::RemoveAuthor" => Ok(ActionId::EditorRemoveAuthor),
             "editor::AddTableRow" => Ok(ActionId::EditorAddTableRow),

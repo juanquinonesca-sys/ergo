@@ -26,6 +26,7 @@ describe("readActiveTextMarks", () => {
             bold: false,
             italic: true,
             underline: false,
+            inListItem: false,
         });
     });
 
@@ -44,6 +45,32 @@ describe("readActiveTextMarks", () => {
             bold: false,
             italic: false,
             underline: false,
+            inListItem: false,
         });
+    });
+
+    it("reports a caret inside a nested list item", () => {
+        const item = (text: string, nested?: ReturnType<typeof bodySchema.nodes.list.create>) =>
+            bodySchema.nodes.list_item.create(null, [
+                bodySchema.nodes.paragraph.create({ elementId: "" }, [bodySchema.text(text)]),
+                ...(nested ? [nested] : []),
+            ]);
+        const nested = bodySchema.nodes.list.create({ elementId: "", ordered: false }, [item("child")]);
+        const listDoc = bodySchema.nodes.doc.create(null, [
+            bodySchema.nodes.list.create({ elementId: "l1", ordered: false }, [item("parent", nested)]),
+            bodySchema.nodes.paragraph.create({ elementId: "p1" }, [bodySchema.text("after")]),
+        ]);
+        let childPos = -1;
+        let afterPos = -1;
+        listDoc.descendants((node, pos) => {
+            if (node.isText && node.text === "child") childPos = pos + 1;
+            if (node.isText && node.text === "after") afterPos = pos + 1;
+        });
+        const at = (pos: number) =>
+            readActiveTextMarks(
+                EditorState.create({ doc: listDoc, selection: TextSelection.create(listDoc, pos) }),
+            ).inListItem;
+        expect(at(childPos)).toBe(true);
+        expect(at(afterPos)).toBe(false);
     });
 });

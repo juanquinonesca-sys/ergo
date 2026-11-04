@@ -66,6 +66,8 @@ export const createBlockObjectNodeViews = (
                 (currentNode.attrs.elementId as string) ||
                 (currentNode.attrs.element as DocumentElement | null)?.id ||
                 "";
+            // Lets DOM-level UI (the right-click menu) name the element it targets.
+            dom.setAttribute("data-element-id", elementId());
 
             const key = `block-object-${name}-${(portalKeySeq += 1)}`;
             registry.register({ key, dom, render: renderThunk(node) });
@@ -197,6 +199,7 @@ export const createBlockObjectNodeViews = (
                         return false;
                     }
                     currentNode = updated;
+                    dom.setAttribute("data-element-id", elementId());
                     registry.update(key, renderThunk(updated));
                     // Selection / edit-mode changes reach this node as decoration
                     // updates, so recompute the bridged UI state here.
