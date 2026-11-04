@@ -54,26 +54,27 @@ const SidebarComponent = ({
                 ariaLabel={m.sidebar_sections()}
                 tabs={[
                     {
-                        id: "outline",
-                        label: m.sidebar_compiled_outline(),
-                        icon: <TextBulletListTree24Regular />,
-                        panel: (
-                            <div className={styles.tabSection}>
-                                <SidebarOutlinePanel
-                                    outlineEntries={outlineEntries}
-                                    previewRevision={previewRevision}
-                                    previewScrollRef={previewScrollRef}
-                                />
-                            </div>
-                        ),
-                    },
-                    {
                         id: "elements",
                         label: m.sidebar_elements(),
                         icon: <AddSquareMultiple24Regular />,
+                        // Insertable elements above, document outline below;
+                        // each half scrolls on its own.
                         panel: (
-                            <div className={styles.tabSection}>
-                                <SidebarElementsPanel />
+                            <div className={styles.splitPanel}>
+                                <section className={styles.splitPane}>
+                                    <SidebarElementsPanel />
+                                </section>
+                                <section className={styles.splitPane}>
+                                    <h3 className={styles.splitHeading}>
+                                        <TextBulletListTree24Regular aria-hidden />
+                                        {m.sidebar_compiled_outline()}
+                                    </h3>
+                                    <SidebarOutlinePanel
+                                        outlineEntries={outlineEntries}
+                                        previewRevision={previewRevision}
+                                        previewScrollRef={previewScrollRef}
+                                    />
+                                </section>
                             </div>
                         ),
                     },

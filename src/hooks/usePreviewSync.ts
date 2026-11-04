@@ -46,11 +46,10 @@ export interface UsePreviewSyncOptions {
     pageVisibilityRef: MutableRefObject<Map<number, number>>;
     /**
      * True once the user has scrolled the caret's page out of view — i.e. they
-     * are browsing elsewhere. While set, the preview neither chases the caret on
-     * a content change nor re-centers, and forward sync searches from the
-     * viewport center instead of following the caret. Shared with
-     * `usePreviewCaret`. Cleared on a preview click and when the caret's page
-     * scrolls back into view.
+     * are browsing elsewhere. While set, forward sync searches from the viewport
+     * center instead of following the caret and page-scroll fallbacks cancel.
+     * Shared with `usePreviewCaret`. Cleared by the next edit or focus move, a
+     * preview click, and when the caret's page scrolls back into view.
      */
     userScrolledAwayRef: MutableRefObject<boolean>;
 }
@@ -117,23 +116,19 @@ export function usePreviewSync({
             return;
         }
 
-        // Only a content change (a fresh compile that actually changed pages)
-        // makes the preview chase the caret — never a bare cursor move or zoom, so
-        // the user is free to scroll/look elsewhere while editing. Act once per
-        // revision, and only after forward sync has resolved the caret for it.
+        // A content change (a fresh compile that actually changed pages) makes
+        // the preview chase the caret; focus moves are followed by the effect
+        // below. Act once per revision, and only after forward sync has resolved
+        // the caret for it.
         if (caretRevision !== previewRevision) {
             return;
         }
         if (handledRevisionRef.current === previewRevision) {
             return;
         }
-        // The user is browsing away from the caret — don't yank them back. Unlike
-        // the old "reset on every compile", this persists across edits until they
-        // scroll the caret back into view (or click the preview), so editing a
-        // field while looking elsewhere keeps the view put.
-        if (userScrolledAwayRef.current) {
-            return;
-        }
+        // Editing again ends "browsing away": the user expects the preview to show
+        // what they are typing, even after scrolling it elsewhere.
+        userScrolledAwayRef.current = false;
 
         const changedPages = previewPages
             .filter((page) => page.changed)

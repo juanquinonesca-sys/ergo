@@ -26,7 +26,7 @@
 ## Epic 3: Workspace and navigation
 
 - **REQ3.1:** The workspace shall present three resizable columns—sidebar, editor (switchable between a template-form view and a document-body view that follows editor focus), and live preview—with persisted split ratios.
-- **REQ3.2:** The sidebar shall switch among **Outline** (compiled structure, jump to fields/elements), **Elements** (insertable body elements), **Bibliography** (reference CRUD), and **Resources** (figures, tables, diagrams, equations with WASM resource previews).
+- **REQ3.2:** The sidebar shall switch among **Elements** (insertable body elements above the compiled outline, which jumps to fields/elements; each half scrolls independently), **Bibliography** (reference CRUD), and **Resources** (figures, tables, diagrams, equations with WASM resource previews).
 - **REQ3.3:** The editor toolbar shall provide text formatting, headings levels 1–6, and an **Insert** menu listing every insertable body element with its effective shortcut; tooltips shall show effective shortcuts, and all entries shall dispatch actions through the action runtime.
 - **REQ3.4:** The menubar shall provide localized menus for file (project lifecycle, PDF export, bibliography export), insert (subset of body elements), view (command palette, sidebar toggles, zoom), settings, and help placeholders.
 - **REQ3.5:** The application shall provide a command palette on the welcome screen and in the workspace to search and invoke catalog actions with the same routing as menus and shortcuts.
@@ -66,7 +66,7 @@
 
 ## Epic 6: Preview ↔ editor synchronization
 
-- **REQ6.1:** After compile, the preview shall scroll toward pages that changed so edits remain visible; when editor focus moves to another element or field, the preview shall bring that spot into view without waiting for a content change.
+- **REQ6.1:** After compile, the preview shall scroll toward pages that changed so edits remain visible; when editor focus moves to another element or field, the preview shall bring that spot into view without waiting for a content change; editing again brings the caret back into view even after the user scrolled the preview elsewhere, and a soft line-wide highlight marks the caret line.
 - **REQ6.2:** Clicking a preview page shall focus the corresponding editor field or body caret using WASM source maps and `FocusField` actions.
 - **REQ6.3:** Activating outline entries or resource rows shall focus the underlying AST element or metadata field in the editor.
 

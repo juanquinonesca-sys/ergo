@@ -8,10 +8,9 @@
     height: 100%;
     min-height: 0;
     padding: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: auto;
-    scrollbar-gutter: stable;
+    /* Each tab panel scrolls on its own (see Tabs `.panel`), so the split
+       Elements/Outline tab can give each half an independent scroll. */
+    overflow: hidden;
 }
 
 .navList {
@@ -19,6 +18,46 @@
     flex-direction: column;
     /* Belt-and-braces against a child's intrinsic width flooring the column. */
     min-width: 0;
+}
+
+/* Elements (top) and outline (bottom), each half scrolling independently. */
+.splitPanel {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    height: 100%;
+}
+
+.splitPane {
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding: var(--space-2) var(--space-3);
+}
+
+.splitPane + .splitPane {
+    border-top: var(--border-width-sm) solid var(--color-border);
+}
+
+.splitHeading {
+    position: sticky;
+    top: calc(-1 * var(--space-2));
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: calc(-1 * var(--space-2)) 0 var(--space-2);
+    padding: var(--space-2) 0;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.splitHeading svg {
+    width: var(--size-icon);
+    height: var(--size-icon);
 }
 
 /* Padding for the non-resource tab panels (outline, bibliography), replacing the

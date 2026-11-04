@@ -1,4 +1,5 @@
 import {
+    Fragment,
     memo,
     useCallback,
     useEffect,
@@ -262,18 +263,29 @@ const PreviewPageCanvasComponent = ({
                     previewContentMarker="canvas"
                     onPainted={onPagePainted}
                 />
-                {carets.map((caret, index) => (
-                    <div
-                        key={`${caret.xPt}:${caret.topYPt}:${index}`}
-                        className={styles.previewCaret}
-                        style={{
-                            left: `${caret.xPt * zoom * CSS_PX_PER_PT}px`,
-                            top: `${caret.topYPt * zoom * CSS_PX_PER_PT}px`,
-                            height: `${caret.heightPt * zoom * CSS_PX_PER_PT}px`,
-                        }}
-                        aria-hidden="true"
-                    />
-                ))}
+                {carets.map((caret, index) => {
+                    const top = `${caret.topYPt * zoom * CSS_PX_PER_PT}px`;
+                    const height = `${caret.heightPt * zoom * CSS_PX_PER_PT}px`;
+                    return (
+                        <Fragment key={`${caret.xPt}:${caret.topYPt}:${index}`}>
+                            {/* Soft band across the page marks the line being edited. */}
+                            <div
+                                className={styles.previewCaretLine}
+                                style={{ top, height }}
+                                aria-hidden="true"
+                            />
+                            <div
+                                className={styles.previewCaret}
+                                style={{
+                                    left: `${caret.xPt * zoom * CSS_PX_PER_PT}px`,
+                                    top,
+                                    height,
+                                }}
+                                aria-hidden="true"
+                            />
+                        </Fragment>
+                    );
+                })}
             </div>
         </div>
     );

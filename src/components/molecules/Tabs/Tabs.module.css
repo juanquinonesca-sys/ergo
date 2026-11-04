@@ -1,6 +1,7 @@
 .tabs {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
     min-height: 0;
 }
 
@@ -85,6 +86,11 @@
     font-weight: var(--font-weight-medium);
 }
 
+/* The active panel fills the remaining height and is the scroll container, so
+   a panel can split itself into independently scrolling regions. */
 .panel {
+    flex: 1 1 auto;
     min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
 }

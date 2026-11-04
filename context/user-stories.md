@@ -26,7 +26,7 @@
 ## Epic 3: Workspace and navigation
 
 - **US3.1 — Tri-column workspace:** Resize three columns—sidebar, editor (switchable between a template-form view and a document-body view that follows editor focus), and live preview—with persisted split ratios.
-- **US3.2 — Sidebar panels:** Switch among **Outline** (compiled structure, jump to fields/elements), **Elements** (insertable body elements), **Bibliography** (reference CRUD), and **Resources** (figures, tables, diagrams, equations with WASM resource previews).
+- **US3.2 — Sidebar panels:** Switch among **Elements** (insertable body elements above the compiled outline, which jumps to fields/elements; each half scrolls independently), **Bibliography** (reference CRUD), and **Resources** (figures, tables, diagrams, equations with WASM resource previews).
 - **US3.3 — Editor toolbar:** Format text, set headings 1–6, and open an **Insert** menu listing every insertable body element with its shortcut; tooltips show effective shortcuts; all entries route through the action runtime.
 - **US3.4 — Menubar:** Localized menus for file (project lifecycle, PDF export, bibliography export), insert (subset of body elements), view (command palette, sidebar toggles, zoom), settings, and help placeholders.
 - **US3.5 — Command palette:** Search and invoke catalog actions from the welcome screen and workspace with the same routing as menus and shortcuts.
@@ -66,7 +66,7 @@
 
 ## Epic 6: Preview ↔ editor synchronization
 
-- **US6.1 — Forward sync:** After compile, scroll the preview toward pages that changed so edits remain visible; moving the cursor to another element or field brings its spot into view.
+- **US6.1 — Forward sync:** After compile, scroll the preview toward pages that changed so edits remain visible; moving the cursor to another element or field brings its spot into view; typing again brings the caret back even after scrolling the preview away, and the caret line is softly highlighted.
 - **US6.2 — Backward sync:** Click a preview page to focus the corresponding editor field or body caret using WASM source maps and `FocusField` actions.
 - **US6.3 — Outline and resource jumps:** Activate outline entries or resource rows to focus the underlying AST element or metadata field in the editor.
 
