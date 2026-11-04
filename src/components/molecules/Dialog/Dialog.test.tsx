@@ -95,7 +95,7 @@ describe("Dialog keyboard shortcuts", () => {
             ),
         });
 
-        const input = container.querySelector("input");
+        const input = document.body.querySelector("input");
         expect(input).not.toBeNull();
 
         act(() => {
@@ -129,7 +129,7 @@ describe("Dialog keyboard shortcuts", () => {
             ),
         });
 
-        const input = container.querySelector("input");
+        const input = document.body.querySelector("input");
         expect(input).not.toBeNull();
 
         act(() => {

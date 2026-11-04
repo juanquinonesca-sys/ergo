@@ -8,6 +8,7 @@ import {
     type ReactNode,
     type RefObject,
 } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "../../atoms/Button/Button";
 import { useFocusTrap } from "../../../hooks/useFocusTrap";
 import styles from "./Dialog.module.css";
@@ -249,7 +250,9 @@ export const Dialog = memo((props: DialogProps) => {
             </section>
         );
 
-    return (
+    // Portaled: workspace columns use `contain: layout`, which would turn this
+    // fixed backdrop into a box inside the column (e.g. the sidebar).
+    return createPortal(
         <div
             className={styles.backdrop}
             role="presentation"
@@ -262,7 +265,8 @@ export const Dialog = memo((props: DialogProps) => {
             >
                 {panel}
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 });
 
